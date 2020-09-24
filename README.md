@@ -7,7 +7,7 @@ This repository is used for [ECSE420: Parallel Computing](https://www.mcgill.ca/
 ## Get Started: The first C++/cuda programming example  
 ```bash
 # reference: https://maker.pro/nvidia-jetson/tutorial/introduction-to-cuda-programming-with-jetson-nano
-make build_sample_cuda
+make build PROJ=playground
 
 # run
 ./bin/sample_cuda
