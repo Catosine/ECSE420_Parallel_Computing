@@ -35,10 +35,11 @@ float get_MSE(char* input_filename_1, char* input_filename_2)
   return MSE;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-  char* input_filename_1 = "Test_1_rectified.png";
-  char* input_filename_2 = "Test_1_rectified_seq.png";
+  if (argc!=3) {printf("Please input 2 PNG files");}
+  char* input_filename_1 = argv[1];
+  char* input_filename_2 = argv[2];
 
   // get mean squared error between image1 and image2
   float MSE = get_MSE(input_filename_1, input_filename_2);

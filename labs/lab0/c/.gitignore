@@ -3,3 +3,4 @@ bin
 !.gitignore
 inc/*.gch
 rectification
+test_equality
