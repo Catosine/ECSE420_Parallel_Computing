@@ -10,7 +10,7 @@ lodepng:
 	mv ./lodepng.o ${dir_bin}
 
 rectification: bin lodepng
-	gcc -I ${dir_inc} ./bin/lodepng.o ./src/rectification.c -o rectification
+	gcc -I ${dir_inc} ./bin/lodepng.o ./src/rectification.c -o rectify
 
 loadpng_test: bin lodepng
 	gcc -I ${dir_inc} ./bin/lodepng.o ./src/lodepng_test.c -o loadpng_test
