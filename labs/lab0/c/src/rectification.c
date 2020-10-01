@@ -5,7 +5,8 @@
 #include "lodepng.h"
 
 int check_if_png(char *name);
-int process(char *input, char* output, int n_thread);
+
+extern void rectificate(char *original, char *modified, int width, int height, int n_thread);
 
 int main(int argc, char *argv[]){
 	
@@ -32,7 +33,36 @@ int main(int argc, char *argv[]){
 	printf("Processing: %s with %d thread(s)\n", argv[1], thread);
 		
 	if (check_if_png(argv[1]) && check_if_png(argv[2])) {
-		process(argv[1], argv[2], thread);
+		
+		unsigned char *original, *modified;
+		unsigned error;
+		unsigned width, height;
+
+		error = lodepng_decode32_file(&original, &width, &height, argv[1]);
+
+		if (error) {
+			printf("ERROR %u: %s\n", error, lodepng_error_text(error));
+			free(original);
+			return 1;
+		} else {
+			modified = (unsigned char*)calloc(width*height*4, sizeof(unsigned char));
+			
+			rectificate(original, modified, width, height, thread);
+			
+			error = lodepng_encode32_file(argv[2], modified, width, height);
+
+			int status = 0;
+			if (error) {
+				printf("ERROR %u: %s\n", error, lodepng_error_text(error));
+				status = 1;
+			}
+
+			free(original);
+			free(modified);
+
+			return status;
+		}
+
 	} else {
 		printf("RuntimeError: Invalid PNG inputs: %s %s\n", argv[1], argv[2]);
 		return 1;
@@ -41,40 +71,6 @@ int main(int argc, char *argv[]){
 	printf("Done\n");
 
 	return 0;
-}
-
-int process(char *input, char *output, int n_thread){
-	unsigned error;
-	unsigned char *image, *new_image;
-	unsigned width, height;
-	error = lodepng_decode32_file(&image, &width, &height, input);
-	if (error) {
-		printf("ERROR %u: %s\n", error, lodepng_error_text(error));
-		return 1;
-	} else {
-		new_image = (unsigned char*)calloc(width*height*4, sizeof(unsigned char));
-		
-		// process image
-		/*
-		unsigned char value;
-		for (int i = 0; i < height; i++){
-			for (int j = 0; j<height; j++){
-				//value = image[4*width*i+4*j];
-				new_image[4*width*i+4*j+0] = image[4*width*i+4*j+0];//R
-				new_image[4*width*i+4*j+1] = image[4*width*i+4*j+1];//G
-				new_image[4*width*i+4*j+2] = image[4*width*i+4*j+2];//B
-				new_image[4*width*i+4*j+3] = image[4*width*i+4*j+3];//Alpha
-			}
-		}
-		*/
-		
-		lodepng_encode32_file(output, new_image, width, height);
-
-		free(image);
-		free(new_image);
-
-		return 0;
-	}
 }
 
 int check_if_png(char *name){
