@@ -5,7 +5,6 @@
 #include <string.h>
 #include <regex.h>
 #include "lodepng.h"
-#include <gputimer.h>
 
 __global__ void rectificate_kernel(unsigned char *original, unsigned char *modified, int width, int height){
 	int batch_size = 1;
@@ -27,7 +26,6 @@ __global__ void rectificate_kernel(unsigned char *original, unsigned char *modif
 }
 
 float rectificate(unsigned char *original, unsigned char *modified, int width, int height, int n_thread){
-	GpuTimer();
 
 	size_t png_size = width*height*4*sizeof(unsigned char);
 		
@@ -38,13 +36,15 @@ float rectificate(unsigned char *original, unsigned char *modified, int width, i
 	unsigned char* cuda_new_image;
 	cudaMalloc((void**) &cuda_new_image, png_size);
 	
-	Start();
+	cudaEvent_t start, stop;
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+
+	cudaEventRecord(start,0);
 	rectificate_kernel <<<1, n_thread>>> (cuda_image, cuda_new_image, width, height);
-	Stop();
+	cudaEventRecord(stop,0);
 
-	float time = Elapsed();
-	~GpuTimer();
-
+	cudaEventSynchronize(stop);
 	cudaDeviceSynchronize();
 
 	modified = (unsigned char*)calloc(1, png_size);
@@ -53,7 +53,10 @@ float rectificate(unsigned char *original, unsigned char *modified, int width, i
 	cudaFree(cuda_image);
 	cudaFree(cuda_new_image);
 
-	return time;
+	float elapsed;
+	cudaEventElapsedTime(&elapsed, start, stop);
+
+	return elapsed;
 }
 
 int check_if_png(char *name){
