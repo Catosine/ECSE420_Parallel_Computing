@@ -5,6 +5,7 @@
 #include <string.h>
 #include <regex.h>
 #include "lodepng.h"
+#include <time.h>
 
 __global__ void rectificate_kernel(unsigned char *original, unsigned char *modified, int width, int height){
 	int batch_size = 1;
@@ -67,6 +68,7 @@ int main(int argc, char *argv[]){
 	if (check_if_png(argv[1]) && check_if_png(argv[2])) {
 		unsigned char *original, *modified;
 		unsigned error, width, height;
+		clock_t start, end;
 
 		error = lodepng_decode32_file(&original, &width, &height, argv[1]);
 
@@ -76,8 +78,10 @@ int main(int argc, char *argv[]){
 			return 1;
 		} else {
 			modified = (unsigned char*)calloc(width*height*4, sizeof(unsigned char));
-
+			
+			start = time(NULL);
 			rectificate(original, modified, width, height, atoi(argv[3]));
+			end = time(NULL);
 
 			error = lodepng_encode32_file(argv[2], modified, width, height);
 
@@ -90,7 +94,7 @@ int main(int argc, char *argv[]){
 			free(original);
 			free(modified);
 			
-			printf("Done\n");
+			printf("Total time: %f\nDone\n", difftime(end, start));
 			return status;
 		}
 	} else {
