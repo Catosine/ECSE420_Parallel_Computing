@@ -14,16 +14,13 @@ void process(char* input_filename, char* output_filename)
   new_image = (unsigned char*) malloc(width * height * 4 * sizeof(unsigned char));
 
   // process image
-  unsigned char value;
   for (int i = 0; i < height; i++) {
-    for (int j = 0; j < width; j++) {	
-
-    	value = image[4*width*i + 4*j];
-
-	    new_image[4*width*i + 4*j + 0] = value; // R
-	    new_image[4*width*i + 4*j + 1] = value; // G
-	    new_image[4*width*i + 4*j + 2] = value; // B
-	    new_image[4*width*i + 4*j + 3] = image[4*width*i + 4*j + 3]; // A
+    for (int j = 0; j < width; j++) {
+	int offset = 4*width*i+4*j;
+	new_image[offset + 0] = image[offset+0]; // R
+	new_image[offset + 1] = image[offset+1]; // G
+	new_image[offset + 2] = image[offset+2]; // B
+	new_image[offset + 3] = image[offset+3]; // A
     }
   }
 

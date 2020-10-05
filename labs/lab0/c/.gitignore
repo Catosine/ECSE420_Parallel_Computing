@@ -7,3 +7,4 @@ test_equality
 a.out
 *.png
 pooling
+loadpng_test

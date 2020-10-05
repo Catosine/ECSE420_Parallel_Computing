@@ -14,11 +14,12 @@ __global__ void rectificate_kernel(unsigned char *original, unsigned char *modif
 	if (threadIdx.x < height){
 		int offset = threadIdx.x * batch_size;
 		for (int i=0; i<batch_size; i++){
-			for (int j=0; j<height; j++){
-				modified[4*width*(offset+i)+4*j+0] = (original[4*width*(offset+i)+4*j+0] < 127) ? 127 : original[4*width*(offset+i)+4*j+0];
-				modified[4*width*(offset+i)+4*j+1] = (original[4*width*(offset+i)+4*j+1] < 127) ? 127 : original[4*width*(offset+i)+4*j+1];	
-				modified[4*width*(offset+i)+4*j+2] = (original[4*width*(offset+i)+4*j+2] < 127) ? 127 : original[4*width*(offset+i)+4*j+2];
-				modified[4*width*(offset+i)+4*j+3] = (original[4*width*(offset+i)+4*j+3] < 127) ? 127 : original[4*width*(offset+i)+4*j+3];
+			for (int j=0; j<width; j++){
+				int pos = 4*width*(offset+i)+4*j;
+				modified[pos+0] = (original[pos+0] < 127) ? 127 : original[pos+0];
+				modified[pos+1] = (original[pos+1] < 127) ? 127 : original[pos+1];	
+				modified[pos+2] = (original[pos+2] < 127) ? 127 : original[pos+2];
+				modified[pos+3] = (original[pos+3] < 127) ? 127 : original[pos+3];
 			}
 		}
 	}
@@ -33,7 +34,7 @@ void rectificate(unsigned char *original, unsigned char *modified, int width, in
 
 	unsigned char* cuda_new_image;
 	cudaMalloc((void**) &cuda_new_image, png_size);
-
+	
 	rectificate_kernel <<<1, n_thread>>> (cuda_image, cuda_new_image, width, height);
 	cudaDeviceSynchronize();
 
