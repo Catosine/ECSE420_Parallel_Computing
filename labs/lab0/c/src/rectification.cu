@@ -5,7 +5,7 @@
 #include <string.h>
 #include <regex.h>
 #include "lodepng.h"
-#include <time.h>
+#include <gputimer.h>
 
 __global__ void rectificate_kernel(unsigned char *original, unsigned char *modified, int width, int height){
 	int batch_size = 1;
@@ -26,7 +26,9 @@ __global__ void rectificate_kernel(unsigned char *original, unsigned char *modif
 	}
 }
 
-void rectificate(unsigned char *original, unsigned char *modified, int width, int height, int n_thread, time_t *start, time_t *end){
+float rectificate(unsigned char *original, unsigned char *modified, int width, int height, int n_thread){
+	GpuTimer();
+
 	size_t png_size = width*height*4*sizeof(unsigned char);
 		
 	unsigned char* cuda_image;
@@ -36,9 +38,12 @@ void rectificate(unsigned char *original, unsigned char *modified, int width, in
 	unsigned char* cuda_new_image;
 	cudaMalloc((void**) &cuda_new_image, png_size);
 	
-	*start = clock();
+	Start();
 	rectificate_kernel <<<1, n_thread>>> (cuda_image, cuda_new_image, width, height);
-	*end = clock();
+	Stop();
+
+	float time = Elapsed();
+	~GpuTimer();
 
 	cudaDeviceSynchronize();
 
@@ -47,6 +52,8 @@ void rectificate(unsigned char *original, unsigned char *modified, int width, in
 		
 	cudaFree(cuda_image);
 	cudaFree(cuda_new_image);
+
+	return time;
 }
 
 int check_if_png(char *name){
@@ -71,7 +78,7 @@ int main(int argc, char *argv[]){
 	if (check_if_png(argv[1]) && check_if_png(argv[2])) {
 		unsigned char *original, *modified;
 		unsigned error, width, height;
-		clock_t start, end;
+		float time;
 
 		error = lodepng_decode32_file(&original, &width, &height, argv[1]);
 
@@ -82,9 +89,7 @@ int main(int argc, char *argv[]){
 		} else {
 			modified = (unsigned char*)calloc(width*height*4, sizeof(unsigned char));
 			
-			//start = clock();
-			rectificate(original, modified, width, height, atoi(argv[3]), &start, &end);
-			//end = clock();
+			time = rectificate(original, modified, width, height, atoi(argv[3]));
 
 			error = lodepng_encode32_file(argv[2], modified, width, height);
 
@@ -97,8 +102,7 @@ int main(int argc, char *argv[]){
 			free(original);
 			free(modified);
 			
-			printf("Total time: %f ms\nDone\n", (double)difftime(end, start)*1000/(double)CLOCKS_PER_SEC);
-			printf("e-s=%ld\ndiff=%f\n", end-start, difftime(end,start));
+			printf("Total time: %f ms\nDone\n", time);
 			return status;
 		}
 	} else {
