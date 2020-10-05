@@ -40,21 +40,25 @@ float rectificate(unsigned char *original, unsigned char *modified, int width, i
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 
-	cudaEventRecord(start,0);
+	cudaEventRecord(start,NULL);
+	
 	rectificate_kernel <<<1, n_thread>>> (cuda_image, cuda_new_image, width, height);
-	cudaEventRecord(stop,0);
-
-	cudaEventSynchronize(stop);
 	cudaDeviceSynchronize();
+
+	cudaEventRecord(stop,NULL);
+	cudaEventSynchronize(stop);
 
 	modified = (unsigned char*)calloc(1, png_size);
 	cudaMemcpy(modified, cuda_new_image, png_size, cudaMemcpyDeviceToHost);
-		
+
 	cudaFree(cuda_image);
 	cudaFree(cuda_new_image);
 
 	float elapsed;
 	cudaEventElapsedTime(&elapsed, start, stop);
+	
+	cudaEventDestroy(start);
+	cudaEventDestroy(stop);
 
 	return elapsed;
 }
@@ -81,7 +85,7 @@ int main(int argc, char *argv[]){
 	if (check_if_png(argv[1]) && check_if_png(argv[2])) {
 		unsigned char *original, *modified;
 		unsigned error, width, height;
-		float time;
+		float time = -1.0;
 
 		error = lodepng_decode32_file(&original, &width, &height, argv[1]);
 
@@ -105,7 +109,7 @@ int main(int argc, char *argv[]){
 			free(original);
 			free(modified);
 			
-			printf("Total time: %f ms\nDone\n", time);
+			printf("Total time: %f\nDone\n", time);
 			return status;
 		}
 	} else {
