@@ -26,7 +26,7 @@ __global__ void rectificate_kernel(unsigned char *original, unsigned char *modif
 	}
 }
 
-void rectificate(unsigned char *original, unsigned char *modified, int width, int height, int n_thread){
+void rectificate(unsigned char *original, unsigned char *modified, int width, int height, int n_thread, time_t *start, time_t *end){
 	size_t png_size = width*height*4*sizeof(unsigned char);
 		
 	unsigned char* cuda_image;
@@ -36,10 +36,13 @@ void rectificate(unsigned char *original, unsigned char *modified, int width, in
 	unsigned char* cuda_new_image;
 	cudaMalloc((void**) &cuda_new_image, png_size);
 	
+	*start = clock();
 	rectificate_kernel <<<1, n_thread>>> (cuda_image, cuda_new_image, width, height);
+	*end = clock();
+
 	cudaDeviceSynchronize();
 
-	unsigned char* new_image = (unsigned char*)calloc(1, png_size);
+	modified = (unsigned char*)calloc(1, png_size);
 	cudaMemcpy(modified, cuda_new_image, png_size, cudaMemcpyDeviceToHost);
 		
 	cudaFree(cuda_image);
@@ -79,9 +82,9 @@ int main(int argc, char *argv[]){
 		} else {
 			modified = (unsigned char*)calloc(width*height*4, sizeof(unsigned char));
 			
-			start = time(NULL);
-			rectificate(original, modified, width, height, atoi(argv[3]));
-			end = time(NULL);
+			//start = clock();
+			rectificate(original, modified, width, height, atoi(argv[3]), &start, &end);
+			//end = clock();
 
 			error = lodepng_encode32_file(argv[2], modified, width, height);
 
@@ -94,7 +97,8 @@ int main(int argc, char *argv[]){
 			free(original);
 			free(modified);
 			
-			printf("Total time: %f\nDone\n", difftime(end, start));
+			printf("Total time: %f ms\nDone\n", (double)difftime(end, start)*1000/(double)CLOCKS_PER_SEC);
+			printf("e-s=%ld\ndiff=%f\n", end-start, difftime(end,start));
 			return status;
 		}
 	} else {

@@ -1,10 +1,9 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-
+#include <regex.h>
 #include "lodepng.h"
 
 
@@ -45,96 +44,102 @@ __global__ void pool_kernel(unsigned char* image, unsigned char* new_image, unsi
 	}
 }
 
-void pooling(char* input_filename, char* output_filename, int thread_define)
-{
-	unsigned error;
-	unsigned char* image, * new_image;
-	unsigned width, height;
+void pool(unsigned char *original, unsigned char *modified, int width, int height, int n_thread){
+	size_t png_size = width*height*4*sizeof(unsigned char);
+		
+	unsigned char* cuda_image;
+	cudaMalloc((void**) &cuda_image, png_size);
+	cudaMemcpy(cuda_image, original, png_size, cudaMemcpyHostToDevice);
 
-
-	//lode input file to image
-	error = lodepng_decode32_file(&image, &width, &height, input_filename); 
-
-	if (error) printf("error %u: %s\n", error, lodepng_error_text(error));
-
-	//malloc a new image
-	new_image = (unsigned char*)malloc(width * height * sizeof(unsigned char));  
-
-	//top_rightact start and end time 
-	clock_t start_time, end_time; 
-
-	start_time = clock();
-	
-	// parallel way of pooling
-	cudaSetDevice(0);
-
-	//move to GPU
-	unsigned char* image_cp;
-	cudaMallocManaged((void**)&image_cp, 4 * width * height * sizeof(unsigned char));
-	cudaMallocManaged((void**)&new_image, width * height * sizeof(unsigned char));
-
-
-	// copy image into image_cp
-	for (int i = 0; i < width * height * 4; i++) {
-		image_cp[i] = image[i];
-	}
-
-	//initialize new_image to 0 
-	for (int i = 0; i < width * height; i++) {
-		new_image[i] = 0;
-	}
-
+	unsigned char* cuda_new_image;
+	cudaMalloc((void**) &cuda_new_image, png_size);
 
 	//top_rightack how many iter we need 
 	int iter = 0;
 
-  //number of block 
-  int num_blocks = 1;
-  int num_threads = thread_define;
-  //int thread;
- 
- if (num_threads > 1024) {
-    while (num_threads > 1024) {
-        num_blocks *= 2; 
-        num_threads /= 2;
-        if (num_threads <= 1024) {
-              break; 
-              }
-    } 
-  }
+	//number of block 
+  	int num_blocks = 1;
+	int num_threads = n_thread;
+  
+  	//int thread;
+ 	if (num_threads > 1024) {
+    	while (num_threads > 1024) {
+        	num_blocks *= 2; 
+        	num_threads /= 2;
+        	if (num_threads <= 1024) {
+              	break; 
+            }
+    	} 
+  	}
 
-	while (iter < width * height / thread_define / 4) {
+	while (iter < width * height / n_thread / 4) {
 		//maxmimum number of threads per block is 1024
-		pool_kernel << <(thread_define + 1023) / 1024, 1 >> > (image_cp, new_image, width, height, iter, thread_define);
+		pool_kernel << <(n_thread + 1023) / 1024, 1 >> > (cuda_image, cuda_new_image, width, height, iter, n_thread);
 		iter++;
 	}
-		pool_kernel << <(thread_define + 1023) / 1024, (height * width) % 1024 >> > (image_cp, new_image, width, height, iter, thread_define);
+	pool_kernel << <(n_thread + 1023) / 1024, (height * width) % 1024 >> > (cuda_image, cuda_new_image, width, height, iter, n_thread);
 
 	cudaDeviceSynchronize();
 
-	end_time = clock();
-
-	printf("time=%f\n", (double)(end_time - start_time) / (double)CLOCKS_PER_SEC);
-
-	////output the image
-	lodepng_encode32_file(output_filename, new_image, width / 2, height / 2); 
-	cudaFree(image); cudaFree(new_image); cudaFree(image_cp);
-	free(image);
-
-	//free(image_cp);
-	//free(new_image);
-	
+	modified = (unsigned char*)calloc(1, png_size);
+	cudaMemcpy(modified, cuda_new_image, png_size, cudaMemcpyDeviceToHost);
+		
+	cudaFree(cuda_image);
+	cudaFree(cuda_new_image);
 }
 
-int main(int argc, char* argv[])
-{
-	char* input_filename = argv[1];
-	char* output_filename_pooling = argv[2];
-  int thread_define = atoi(argv[3]);
-	//char* input_filename = "Test_1.png";
-	//char* output_filename_pooling = "Test_1_output.png";
-	
-	pooling(input_filename, output_filename_pooling, thread_define);
+int check_if_png(char *name){
+	regex_t reg;
+	const char *pattern = "^.*\\.(png)?$";
+	regcomp(&reg, pattern, REG_EXTENDED);
+	const size_t nmatch = 1;
+	regmatch_t pmatch[1];
+	int status = regexec(&reg, name, nmatch, pmatch, 0);
+	regfree(&reg);
+	return (status == REG_NOMATCH) ? 0:1;
+}
 
-	return 0;
+int main(int argc, char *argv[]){
+	printf("ECSE 420 Lab 0: Simple CUDA Processing - Pooling\n");
+
+	if (argc != 4) {
+		printf("RuntimeError: Please use the correct input format: ./pooling original.png rectficated.png [n_thread]\n");
+		return 1;
+	}
+	
+	if (check_if_png(argv[1]) && check_if_png(argv[2])) {
+		unsigned char *original, *modified;
+		unsigned error, width, height;
+
+		error = lodepng_decode32_file(&original, &width, &height, argv[1]);
+
+		if (error) {
+			printf("ERROR %u: %s\n", error, lodepng_error_text(error));
+			free(original);
+			return 1;
+		} else {
+			modified = (unsigned char*)calloc(width*height*4, sizeof(unsigned char));
+			
+			time_t start = clock();
+			pool(original, modified, width, height, atoi(argv[3]));
+			time_t end = clock();
+
+			error = lodepng_encode32_file(argv[2], modified, width/2, height/2);
+
+			int status = 0;
+			if (error) {
+				printf("ERROR %u: %s\n", error, lodepng_error_text(error));
+				status = 1;
+			}
+			
+			free(original);
+			free(modified);
+			
+			printf("Total time: %f\nDone\n", (double)(end-start)/(double)CLOCKS_PER_SEC);
+			return status;
+		}
+	} else {
+		printf("RuntimeError: Invalid PNG inputs: %s %s\n", argv[1], argv[2]);
+		return 1;
+	}
 }
