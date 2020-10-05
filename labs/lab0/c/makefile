@@ -14,6 +14,9 @@ lodepng_cu: bin
 	nvcc -I ${dir_inc} ${dir_src}/lodepng.cu -c
 	mv ./lodepng.o ${dir_bin}
 
+pooling: lodepng_cu
+	nvcc -I ${dir_inc} ${dir_bin}/lodepng.o ${dir_src}/pooling.cu -o pooling
+
 rectify: lodepng_cu
 	nvcc -I ${dir_inc} ${dir_bin}/lodepng.o ${dir_src}/rectification.cu -o rectify
 

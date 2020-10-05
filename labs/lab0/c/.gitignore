@@ -5,3 +5,5 @@ inc/*.gch
 rectify
 test_equality
 a.out
+*.png
+pooling
