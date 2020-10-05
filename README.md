@@ -2,6 +2,7 @@
 This repository is used for [ECSE420: Parallel Computing](https://www.mcgill.ca/study/2020-2021/courses/ecse-420) provided by McGill University in Fall 2020.  
 
 ## Hardware  
+[![Generic badge](https://img.shields.io/badge/PoweredBy-Nvidia-<COLOR>.svg)](https://www.nvidia.com/)  
 All codes are developed, compiled, and tested on a [Nvidia Jetson Nano](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-nano/).
 
 ## Labs  
