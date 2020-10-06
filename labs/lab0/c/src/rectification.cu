@@ -8,7 +8,14 @@
 #include <time.h>
 #include <gputimer.h>
 
-__global__ void rectificate_kernel(unsigned char *original, unsigned char *modified, int width, int height){
+__global__ void rectificate_kernel(unsigned char *original, unsigned char *modified, int width, int height, int thread_n){
+	/*
+	int size = width*height*4*sizeof(unsigned char);
+	for (int i = threadIdx.x; i<size; i+=thread_n){
+		modified[i] = (original[i] >= 127) ? original[i] : 127;
+	}
+	*/
+	
 	int batch_size = 1;
 	if (blockDim.x <= height){
 		batch_size = height / blockDim.x;
@@ -45,7 +52,7 @@ float rectificate(unsigned char *original, unsigned char *modified, int width, i
 	//start = clock();
 	t.Start();
 
-	rectificate_kernel <<<1, n_thread>>> (cuda_image, cuda_new_image, width, height);
+	rectificate_kernel <<<1, n_thread>>> (cuda_image, cuda_new_image, width, height, n_thread);
 	//t.Stop();
 	cudaDeviceSynchronize();
 	t.Stop();
