@@ -5,6 +5,7 @@
 #include <string.h>
 #include <regex.h>
 #include "lodepng.h"
+#include <time.h>
 
 __global__ void rectificate_kernel(unsigned char *original, unsigned char *modified, int width, int height){
 	int batch_size = 1;
@@ -36,17 +37,21 @@ float rectificate(unsigned char *original, unsigned char *modified, int width, i
 	unsigned char* cuda_new_image;
 	cudaMalloc((void**) &cuda_new_image, png_size);
 	
-	cudaEvent_t start, stop;
-	cudaEventCreate(&start);
-	cudaEventCreate(&stop);
-
-	cudaEventRecord(start,NULL);
+	//cudaEvent_t start, stop;
+	//cudaEventCreate(&start);
+	//cudaEventCreate(&stop);
 	
+	time_t start, end;
+
+	//cudaEventRecord(start,NULL);
+	
+	start = clock();
 	rectificate_kernel <<<1, n_thread>>> (cuda_image, cuda_new_image, width, height);
 	cudaDeviceSynchronize();
+	end = clock();
 
-	cudaEventRecord(stop,NULL);
-	cudaEventSynchronize(stop);
+	//cudaEventRecord(stop,NULL);
+	//cudaEventSynchronize(stop);
 
 	modified = (unsigned char*)calloc(1, png_size);
 	cudaMemcpy(modified, cuda_new_image, png_size, cudaMemcpyDeviceToHost);
@@ -54,13 +59,12 @@ float rectificate(unsigned char *original, unsigned char *modified, int width, i
 	cudaFree(cuda_image);
 	cudaFree(cuda_new_image);
 
-	float elapsed;
-	cudaEventElapsedTime(&elapsed, start, stop);
+	//cudaEventElapsedTime(&elapsed, start, stop);
 	
-	cudaEventDestroy(start);
-	cudaEventDestroy(stop);
+	//cudaEventDestroy(start);
+	//cudaEventDestroy(stop);
 
-	return elapsed;
+	return (double)(end-start)/(double)CLOCKS_PER_SEC;
 }
 
 int check_if_png(char *name){
@@ -96,7 +100,7 @@ int main(int argc, char *argv[]){
 		} else {
 			modified = (unsigned char*)calloc(width*height*4, sizeof(unsigned char));
 			
-			time = rectificate(original, modified, width, height, atoi(argv[3]));
+			time = rectificate(original, modified, width, height, atoi(argv[3])) * 1000;
 
 			error = lodepng_encode32_file(argv[2], modified, width, height);
 
@@ -109,7 +113,7 @@ int main(int argc, char *argv[]){
 			free(original);
 			free(modified);
 			
-			printf("Total time: %f\nDone\n", time);
+			printf("Total time: %f ms\nDone\n", time);
 			return status;
 		}
 	} else {
