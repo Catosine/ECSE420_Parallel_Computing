@@ -9,12 +9,14 @@
 #include <gputimer.h>
 
 __global__ void rectificate_kernel(unsigned char *original, unsigned char *modified, int width, int height, int thread_n){
+	
 	/*
 	int size = width*height*4*sizeof(unsigned char);
 	for (int i = threadIdx.x; i<size; i+=thread_n){
-		modified[i] = (original[i] >= 127) ? original[i] : 127;
+		original[i] = (modified[i] >= 127) ? modified[i] : 127;
 	}
 	*/
+	
 	
 	int batch_size = 1;
 	if (blockDim.x <= height){
@@ -32,6 +34,8 @@ __global__ void rectificate_kernel(unsigned char *original, unsigned char *modif
 			}
 		}
 	}
+	
+	
 }
 
 float rectificate(unsigned char *original, unsigned char *modified, int width, int height, int n_thread){
@@ -54,12 +58,13 @@ float rectificate(unsigned char *original, unsigned char *modified, int width, i
 
 	rectificate_kernel <<<1, n_thread>>> (cuda_image, cuda_new_image, width, height, n_thread);
 	//t.Stop();
+	//cudaThreadSynchronize();
 	cudaDeviceSynchronize();
 	t.Stop();
 
 	//end = clock();
-
-	modified = (unsigned char*)calloc(1, png_size);
+	
+	//modified = (unsigned char*)calloc(1, png_size);
 	cudaMemcpy(modified, cuda_new_image, png_size, cudaMemcpyDeviceToHost);
 
 	cudaFree(cuda_image);
@@ -67,6 +72,7 @@ float rectificate(unsigned char *original, unsigned char *modified, int width, i
 
 	//end = clock();
 	
+	//return 0;
 	return t.Elapsed();
 	//return (double)(end-start)/(double)CLOCKS_PER_SEC;
 }
@@ -107,7 +113,7 @@ int main(int argc, char *argv[]){
 			cudaSetDevice(0);
 
 			time = rectificate(original, modified, width, height, atoi(argv[3]))/1000.0;
-
+			
 			error = lodepng_encode32_file(argv[2], modified, width, height);
 
 			int status = 0;
