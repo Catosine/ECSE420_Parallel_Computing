@@ -6,6 +6,7 @@
 #include <regex.h>
 #include "lodepng.h"
 #include <time.h>
+#include <gputimer.h>
 
 __global__ void rectificate_kernel(unsigned char *original, unsigned char *modified, int width, int height){
 	int batch_size = 1;
@@ -27,6 +28,10 @@ __global__ void rectificate_kernel(unsigned char *original, unsigned char *modif
 }
 
 float rectificate(unsigned char *original, unsigned char *modified, int width, int height, int n_thread){
+	//time_t start, end;
+	//start = clock();
+	
+	GpuTimer t;
 
 	size_t png_size = width*height*4*sizeof(unsigned char);
 		
@@ -37,21 +42,15 @@ float rectificate(unsigned char *original, unsigned char *modified, int width, i
 	unsigned char* cuda_new_image;
 	cudaMalloc((void**) &cuda_new_image, png_size);
 	
-	//cudaEvent_t start, stop;
-	//cudaEventCreate(&start);
-	//cudaEventCreate(&stop);
-	
-	time_t start, end;
+	//start = clock();
+	t.Start();
 
-	//cudaEventRecord(start,NULL);
-	
-	start = clock();
 	rectificate_kernel <<<1, n_thread>>> (cuda_image, cuda_new_image, width, height);
+	//t.Stop();
 	cudaDeviceSynchronize();
-	end = clock();
+	t.Stop();
 
-	//cudaEventRecord(stop,NULL);
-	//cudaEventSynchronize(stop);
+	//end = clock();
 
 	modified = (unsigned char*)calloc(1, png_size);
 	cudaMemcpy(modified, cuda_new_image, png_size, cudaMemcpyDeviceToHost);
@@ -59,12 +58,10 @@ float rectificate(unsigned char *original, unsigned char *modified, int width, i
 	cudaFree(cuda_image);
 	cudaFree(cuda_new_image);
 
-	//cudaEventElapsedTime(&elapsed, start, stop);
+	//end = clock();
 	
-	//cudaEventDestroy(start);
-	//cudaEventDestroy(stop);
-
-	return (double)(end-start)/(double)CLOCKS_PER_SEC;
+	return t.Elapsed();
+	//return (double)(end-start)/(double)CLOCKS_PER_SEC;
 }
 
 int check_if_png(char *name){
@@ -100,7 +97,9 @@ int main(int argc, char *argv[]){
 		} else {
 			modified = (unsigned char*)calloc(width*height*4, sizeof(unsigned char));
 			
-			time = rectificate(original, modified, width, height, atoi(argv[3])) * 1000;
+			cudaSetDevice(0);
+
+			time = rectificate(original, modified, width, height, atoi(argv[3]))/1000.0;
 
 			error = lodepng_encode32_file(argv[2], modified, width, height);
 
@@ -113,7 +112,10 @@ int main(int argc, char *argv[]){
 			free(original);
 			free(modified);
 			
-			printf("Total time: %f ms\nDone\n", time);
+			printf("Total time: %f\nDone\n", time);
+			
+			cudaDeviceReset();
+
 			return status;
 		}
 	} else {

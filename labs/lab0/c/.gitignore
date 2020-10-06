@@ -8,3 +8,5 @@ a.out
 *.png
 pooling
 loadpng_test
+./src/rectify.cu
+rectify_test
