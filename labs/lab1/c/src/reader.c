@@ -65,7 +65,21 @@ int read_csv(char* file, int** output, int *line)
     }
 }
 
-// an example of how to use this read_csv
+int save(char* file, int* results, int size)
+{
+    FILE *f = fopen(file, "w");
+    if (f)
+    {
+        for(int i=0; i<size; i++)
+        {
+            fprintf(f, "%d\n", *(results+i));
+        }
+    }
+    fclose(f);
+    return 0;
+}
+
+// an example of how to use this read_csv and save
 
 // int main(){
 // 	char *test="./input_10000.txt";
@@ -78,5 +92,9 @@ int read_csv(char* file, int** output, int *line)
 // 	printf("Total: %d\n", line);
 // 	output = NULL;
 // 	free(output);
+
+//     int result[3] = {1,2,3};
+//     save("./test.txt", result, 3);
+
 // 	return 0;
 // }
