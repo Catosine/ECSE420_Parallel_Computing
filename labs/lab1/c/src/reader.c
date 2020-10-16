@@ -17,8 +17,12 @@ int csv_check(char* path)
     }
     return 0;
 }
-
-int read_csv(char* file, char** output, int *line)
+/* this flie takes three parameters:
+ *      char* file: path to the txt file formatted in csv
+ *      int** output: pointer stores data in the csv file
+ *      int* line: pointer to line count
+ */
+int read_csv(char* file, int** output, int *line)
 {
     if (csv_check(file))
     {
@@ -30,38 +34,49 @@ int read_csv(char* file, char** output, int *line)
     {
         // check passed
         // allocate memory
-        output = (char **)calloc(1000000, sizeof(char *));
         *line = 0;
 
         // read the csv file
         FILE* f = fopen(file, "r");
         char *tmp = (char *)calloc(10, sizeof(char));
+        char *token;
         if (f)
         {
             while(fgets(tmp, 10, f))
             {
-		*(output+*line) = strtok(tmp, ",");
-		*line = *line + 1;	
+		        *(output+*line) = (int *)calloc(3, sizeof(int));
+                token = strtok(tmp, ",");
+                int i = 0;
+                while(token!=NULL)
+                {
+                    *(*(output+*line)+i) = atoi(token);
+                    token = strtok(NULL, ",");
+                    i++;
+                }
+		        *line = *line + 1;	
             }
         }
         fclose(f);
+
         tmp = NULL;
         free(tmp);
+
         return 0;
     }
 }
 
-int main(){
-	char *test="../../res/input_10000.txt";
-	int line = 0;
-	char **output;
-	read_csv(test, output, &line);
-	
-	for(int i=0; i<line; i++){
-		printf("input1=%d input2=%d, gate=%d\n", atoi(*(output+i)), atoi(*(output+i)+1), atoi(*(output+i)+2));
-	}
-	printf("Total: %d\n", line);
-	output = NULL;
-	free(output);
-	return 0;
-}
+// an example of how to use this read_csv
+
+// int main(){
+// 	char *test="./input_10000.txt";
+// 	int line = 0;
+// 	int **output = (int **)calloc(1000000, sizeof(int *));
+// 	read_csv(test, output, &line);
+// 	for(int i=0; i<line; i++){
+// 		printf("line %d: input1: %d, linput2: %d, type: %d\n", i, **(output+i), *(*(output+i)+1), *(*(output+i)+2));
+//     }
+// 	printf("Total: %d\n", line);
+// 	output = NULL;
+// 	free(output);
+// 	return 0;
+// }
