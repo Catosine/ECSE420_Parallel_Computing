@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "reader.h"
 #include <stdlib.h>
+#include "gputimer.h"
 
 __global__ void kernel(int* data, int* result, int size)
 {
@@ -50,6 +51,8 @@ __global__ void kernel(int* data, int* result, int size)
 
 int main(int argc, char *argv[])
 {
+	GpuTimer timer;
+	timer.Start();
 	printf("ECSE 420 Lab 1: Logic Gates Simulation - parallel_explicit\n");
 	if (argc != 4)
 	{
@@ -59,22 +62,23 @@ int main(int argc, char *argv[])
 	}
 	
 	int size = atoi(argv[2]);
+
+	GpuTimer loadTimer;
+	loadTimer.Start();
 	int* file = (int *)calloc(size*3, sizeof(int));
-	/*
-	for(int i=0; i<size; i++)
-	{
-		*(file+i) = (int *)calloc(3, sizeof(int));
-	}
-	*/
+	
 	if(read_csv_array(argv[1], file, &size)==0){
-		int *cuda_file;
 		
+		int *cuda_file;	
 		cudaMalloc((void **) &cuda_file, size*3*sizeof(int));
 		cudaMemcpy(cuda_file, file, size*3*sizeof(int), cudaMemcpyHostToDevice);
 
 		int *cuda_output;
 		cudaMalloc((void **) &cuda_output, size*sizeof(int));
-		
+		loadTimer.Stop();
+
+		float laodTime = loadTimer.Elapsed();
+
 		int block = size/1024;
 		if (size%1024) {
 			block++;
@@ -82,12 +86,16 @@ int main(int argc, char *argv[])
 
 		kernel <<<block, 1024>>> (cuda_file, cuda_output, size);
 		cudaDeviceSynchronize();
-
+		
+		GpuTimer retrivetimer;
+		retrivetimer.Start();
+		
 		int *output = (int *)calloc(size, sizeof(int));
 		cudaMemcpy(output, cuda_output, size*sizeof(int), cudaMemcpyDeviceToHost);
-		
+		retrivetimer.Stop();
+		float retriveTime = retrivetimer.Elapsed();
+
 		save(argv[3], output, size);
-		printf("Done\n");
 
 		cudaFree(cuda_file);
 		cudaFree(cuda_output);
@@ -97,6 +105,13 @@ int main(int argc, char *argv[])
 
 		output = NULL;
 		free(output);
+		
+		timer.Stop();
+
+		float totalTime = timer.Elapsed();
+
+		printf("Done\n");
+		printf("Load Time: %f ms\nRetrive Time: %f ms\nTotal Time: %f ms\n", laodTime, retriveTime, totalTime);
 
 		return 0;
 	}

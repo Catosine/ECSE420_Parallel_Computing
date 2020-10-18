@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "reader.h"
 #include <stdlib.h>
+#include "gputimer.h"
 
 __global__ void kernel(int* data, int* result, int size)
 {
@@ -50,6 +51,8 @@ __global__ void kernel(int* data, int* result, int size)
 
 int main(int argc, char *argv[])
 {
+	GpuTimer timer;
+	timer.Start();
 	printf("ECSE 420 Lab 1: Logic Gates Simulation - parallel_explicit\n");
 	if (argc != 4)
 	{
@@ -59,6 +62,9 @@ int main(int argc, char *argv[])
 	}
 	
 	int size = atoi(argv[2]);
+
+	GpuTimer loadTimer;
+	loadTimer.Start();
 	int* cuda_file;
 	cudaMallocManaged((void **) &cuda_file, size*3*sizeof(int));
 
@@ -66,7 +72,9 @@ int main(int argc, char *argv[])
 		
 		int *cuda_output;
 		cudaMallocManaged((void **) &cuda_output, size*sizeof(int));
-		
+		loadTimer.Stop();
+		float loadTime = loadTimer.Elapsed();
+
 		int block = size/1024;
 		if (size%1024) {
 			block++;
@@ -74,17 +82,27 @@ int main(int argc, char *argv[])
 
 		kernel <<<block, 1024>>> (cuda_file, cuda_output, size);
 		cudaDeviceSynchronize();
-
+		
+		GpuTimer retriveTimer;
+		retriveTimer.Start();
 		save(argv[3], cuda_output, size);
-		printf("Done\n");
+		retriveTimer.Stop();
+		float retriveTime = retriveTimer.Elapsed();
 
 		cudaFree(cuda_file);
 		cudaFree(cuda_output);
+		
+		timer.Stop();
+		float totalTime = timer.Elapsed();
+		
+		printf("Done\n");
+		printf("Load Time: %f ms\nRetrive Time: %f ms\nTotal Time: %f ms\n", loadTime, retriveTime, totalTime);
 
 		return 0;
 	}
 	else
 	{
+		timer.Stop();
 		cudaFree(cuda_file);
 		return 1;
 	}

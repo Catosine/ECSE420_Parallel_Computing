@@ -19,7 +19,8 @@ FILE* fp2 = fopen(file_name2, "r");
   
     // iterate loop till end of file 
     while (ch1 != EOF && ch2 != EOF) 
-    { 
+    {
+	printf("Progress: %d\n", line);
         pos++; 
   
         // if both variable encounters new 
