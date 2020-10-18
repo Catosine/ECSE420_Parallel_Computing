@@ -2,7 +2,8 @@
 !.gitignore
 /src/a.out
 a.out
-parallel_*
+parallel_explicit
+parallel_unified
 *.txt
 compareResults
 bin
