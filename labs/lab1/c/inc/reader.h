@@ -5,6 +5,8 @@
  */
 int read_csv(char* file, int** output, int *line);
 
+int read_csv_array(char* file, int* output, int* line);
+
 /* this flie takes three parameters:
  *      char* file: path to the txt file formatted in csv
  *      int* results: array of int results

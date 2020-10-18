@@ -2,3 +2,8 @@
 !.gitignore
 /src/a.out
 a.out
+parallel_explicit
+*.txt
+compareResults
+bin
+bin/*
