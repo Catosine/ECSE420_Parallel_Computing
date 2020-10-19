@@ -4,6 +4,7 @@
 #include "../inc/reader.h"
 #include <unistd.h>
 #include <string.h>
+#include <time.h>
 
 #define AND 0
 #define OR 1
@@ -134,6 +135,8 @@ int main(int argc, char*argv[]){
         exit(1);
     }
 
+    clock_t begin = clock();
+
     int num_lines = atoi(argv[2]);
     int **sourceInput = (int **)calloc(num_lines, sizeof(int *));
     int result[num_lines];
@@ -158,6 +161,11 @@ int main(int argc, char*argv[]){
             break;
         printf("result file is saved\n");
     }
+
+    clock_t end = clock();
+    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+
+    printf("The total runtime is %f.\n", time_spent);
 
     EXIT_SUCCESS;
 }
