@@ -1,3 +1,6 @@
+sequential:
+	gcc ./src/sequential.c -o sequential
+	
 parallel_unified: bin reader
 	nvcc -I ./inc ./bin/reader.o ./src/parallel_unified.cu -o parallel_unified
 
