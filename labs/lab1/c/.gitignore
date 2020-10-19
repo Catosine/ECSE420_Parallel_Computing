@@ -8,3 +8,5 @@ parallel_unified
 compareResults
 bin
 bin/*
+sequential
+src/sequential
