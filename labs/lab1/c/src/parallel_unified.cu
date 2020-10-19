@@ -53,11 +53,11 @@ int main(int argc, char *argv[])
 {
 	GpuTimer timer;
 	timer.Start();
-	printf("ECSE 420 Lab 1: Logic Gates Simulation - parallel_explicit\n");
+	printf("ECSE 420 Lab 1: Logic Gates Simulation - parallel_unified\n");
 	if (argc != 4)
 	{
 		printf("RuntimeError: Wrong inputs.\n");
-		printf("You should input follows this format: ./parallel_explicit <input_file_path> <input_file_length> <output_file_path>\n");
+		printf("You should input follows this format: ./parallel_unified <input_file_path> <input_file_length> <output_file_path>\n");
 		return 1;
 	}
 	
