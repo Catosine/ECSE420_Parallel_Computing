@@ -79,9 +79,15 @@ int main(int argc, char *argv[])
 		if (size%1024) {
 			block++;
 		}
-
+		
+		GpuTimer parallelTimer;
+		parallelTimer.Start();
 		kernel <<<block, 1024>>> (cuda_file, cuda_output, size);
 		cudaDeviceSynchronize();
+
+		parallelTimer.Stop();
+
+		float parallelTime = parallelTimer.Elapsed();
 		
 		GpuTimer retriveTimer;
 		retriveTimer.Start();
@@ -96,7 +102,7 @@ int main(int argc, char *argv[])
 		float totalTime = timer.Elapsed();
 		
 		printf("Done\n");
-		printf("Load Time: %f ms\nRetrive Time: %f ms\nTotal Time: %f ms\n", loadTime, retriveTime, totalTime);
+		printf("Load Time: %f ms\nParallel Time: %f ms\nRetrive Time: %f ms\n---------------\nTotal Time: %f ms\n", loadTime, parallelTime, retriveTime, totalTime);
 
 		return 0;
 	}
