@@ -7,6 +7,9 @@ parallel_unified: bin reader
 parallel_explicit: bin reader
 	nvcc -I ./inc ./bin/reader.o ./src/parallel_explicit.cu -o parallel_explicit
 
+parallel_unified_prefetch: bin reader
+	nvcc -I ./inc ./bin/reader.o ./src/parallel_unitifed_prefetch.cu -o parallel_unified_prefetch
+
 compareResults:
 	gcc ./src/compareResults.c -o compareResults
 
