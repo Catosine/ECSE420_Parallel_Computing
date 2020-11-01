@@ -110,7 +110,7 @@ int main(int argc, char* argv[])
     cudaMemcpy(c_grid, grid, GRID_SIZE*GRID_SIZE*sizeof(float), cudaMemcpyHostToDevice);
 
     for(int i = 0; i<iter; i++){
-        simulation_kernel <<<1, GRID_SIZE*GRID_SIZE>>>(c_grid, c_grid_1, c_grid_2);
+        simulation_kernel <<<GRID_SIZE, GRID_SIZE>>>(c_grid, c_grid_1, c_grid_2);
         cudaDeviceSynchronize();
 
         cudaMemcpy(c_grid_2, c_grid_1, GRID_SIZE*GRID_SIZE*sizeof(float), cudaMemcpyDeviceToDevice);
