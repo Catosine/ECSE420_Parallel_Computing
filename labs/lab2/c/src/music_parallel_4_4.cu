@@ -107,9 +107,9 @@ int main(int argc, char* argv[])
     cudaMalloc((void **) &c_grid, GRID_SIZE*GRID_SIZE*sizeof(float));
     cudaMemcpy(c_grid, grid, GRID_SIZE*GRID_SIZE*sizeof(float), cudaMemcpyHostToDevice);
     
-    GpuTimer timer;
+    GpuTimer timer, totalTimer;
     printf("Size of grid: %d nodes\n", GRID_SIZE*GRID_SIZE);
-    //timer.Start();
+    totalTimer.Start();
     float runtime;
     for(int i = 0; i<iter; i++){
         timer.Start();
@@ -123,15 +123,15 @@ int main(int argc, char* argv[])
         cudaMemcpy(c_grid_1, c_grid, GRID_SIZE*GRID_SIZE*sizeof(float), cudaMemcpyDeviceToDevice);
         cudaMemcpy(grid, c_grid, GRID_SIZE*GRID_SIZE*sizeof(float), cudaMemcpyDeviceToHost);
 
-        print_grid(grid);
-	//printf("#%d (%d,%d): %f\n", i, GRID_SIZE/2, GRID_SIZE/2, *(grid+GRID_SIZE*(GRID_SIZE/2)+GRID_SIZE/2));
+        //print_grid(grid);
+	printf("#%d (%d,%d): %f\n", i, GRID_SIZE/2, GRID_SIZE/2, *(grid+GRID_SIZE*(GRID_SIZE/2)+GRID_SIZE/2));
 	
     	printf("Runtime for #%d: %f ms\n", i, runtime);
     }
-    //timer.Stop();
+    totalTimer.Stop();
 	
-    //printf("------------------------------\n");
-    //printf("Runtime for simulation: %f ms\n", timer.Elapsed());
+    printf("------------------------------\n");
+    printf("Runtime for simulation: %f ms\n", totalTimer.Elapsed());
 
     cudaFree(c_grid);
     cudaFree(c_grid_1);

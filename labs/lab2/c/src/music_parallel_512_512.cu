@@ -5,16 +5,17 @@
 #include <string.h>
 #include <gputimer.h>
 
-#define GRID_SIZE 512
+#define GRID_SIZE 4
 #define MIU 0.0002
 #define RHO 0.5
 #define G 0.75
-#define THREAD_SIZE 16
+#define THREAD_SIZE 4
+#define BLOCK_SIZE 4
 
-__global__ void simulation_kernel(float *grid, float *grid_1, float *grid_2)
+__global__ void simulation_kernel(float *grid, float *grid_1, float *grid_2, int block_n, int thread_n)
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int length = (GRID_SIZE*GRID_SIZE/blockDim.x) / blockDim.x;
+    int length = ((GRID_SIZE*GRID_SIZE)/block_n)/thread_n;
     for(int i=0; i<length; i++)
     {
         int y = (idx+i)/GRID_SIZE;
@@ -117,7 +118,7 @@ int main(int argc, char* argv[])
     totalTimer.Start();
     for(int i = 0; i<iter; i++){
 	timer.Start();
-        simulation_kernel <<<GRID_SIZE, THREAD_SIZE>>>(c_grid, c_grid_1, c_grid_2);
+        simulation_kernel <<<BLOCK_SIZE, THREAD_SIZE>>>(c_grid, c_grid_1, c_grid_2, BLOCK_SIZE, THREAD_SIZE);
         cudaDeviceSynchronize();
 	timer.Stop();
 	runtime = timer.Elapsed();
