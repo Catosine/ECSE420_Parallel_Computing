@@ -95,7 +95,7 @@ int main(int argc, char* argv[])
 
     int iter = atoi(argv[1]);
 
-    float *grid = (float)calloc(GRID_SIZE*GRID_SIZE, sizeof(float));
+    float *grid = (float *)calloc(GRID_SIZE*GRID_SIZE, sizeof(float));
 
     float *c_grid, *c_grid_1, *c_grid_2;
     cudaMalloc((void **) &c_grid_1, GRID_SIZE*GRID_SIZE*sizeof(float));
