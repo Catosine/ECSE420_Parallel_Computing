@@ -113,10 +113,10 @@ int main(int argc, char* argv[])
     float *grid_1 = (float *)calloc(GRID_SIZE*GRID_SIZE, sizeof(float));
     float *grid_2 = (float *)calloc(GRID_SIZE*GRID_SIZE, sizeof(float));
 
-    *(grid+GRID_SIZE*(GRID_SIZE/2)+(GRID_SIZE/2)) = 1.0f;
+    //*(grid+GRID_SIZE*(GRID_SIZE/2)+(GRID_SIZE/2)) = 1.0f;
     *(grid_1+GRID_SIZE*(GRID_SIZE/2)+(GRID_SIZE/2)) = 1.0f;
-    *(grid_2+GRID_SIZE*(GRID_SIZE/2)+(GRID_SIZE/2)) = 1.0f;
-    print_grid(grid);
+    //*(grid_2+GRID_SIZE*(GRID_SIZE/2)+(GRID_SIZE/2)) = 1.0f;
+    //print_grid(grid);
     for(int i = 0; i<iter; i++){
         simulation(grid, grid_1, grid_2);
         print_grid(grid);
