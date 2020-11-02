@@ -1,4 +1,4 @@
 .*
 !.gitignore
 sequential_4_4
-parallel_*_*
+grid_*_*
