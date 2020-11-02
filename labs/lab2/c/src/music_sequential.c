@@ -16,49 +16,49 @@ int simulation(float *grid, float *grid_1, float *grid_2)
             if(y==0&&x!=0&&x!=GRID_SIZE-1)
             {
                 //boundary condition 1: y = 0
-                float u1_x_1 = *(grid_1+GRID_SIZE*(y+1)+x);
+                float u1_x_1 = *(grid+GRID_SIZE*(y+1)+x);
                 *(grid+GRID_SIZE*y+x) = G * u1_x_1;
             } 
             else if (y==GRID_SIZE-1&&x!=0&&x!=GRID_SIZE-1)
             {
                 //boundary condition 2: y = GRID_SIZE-1
-                float u1_x_y1 = *(grid_1+GRID_SIZE*(y-1)+x);
+                float u1_x_y1 = *(grid+GRID_SIZE*(y-1)+x);
                 *(grid+GRID_SIZE*y+x) = G * u1_x_y1;
             }
             else if(x==0&&y!=0&&y!=GRID_SIZE-1)
             {
                 //boundary condition 3: x = 0
-                float u1_1_y = *(grid_1+GRID_SIZE*y+(x+1));
+                float u1_1_y = *(grid+GRID_SIZE*y+(x+1));
                 *(grid+GRID_SIZE*y+x) = G * u1_1_y;
             } 
             else if (x==GRID_SIZE-1&&y!=0&&y!=GRID_SIZE-1)
             {
                 //boundary condition 4: x = GRID_SIZE-1
-                float u1_x1_y = *(grid_1+GRID_SIZE*y+(x-1));
+                float u1_x1_y = *(grid+GRID_SIZE*y+(x-1));
                 *(grid+GRID_SIZE*y+x) = G * u1_x1_y;
             }
             else if (x==0&&y==0) 
             {
                 // corner condition 1: x = y = 0
-                float u1_1_0 = *(grid_1+GRID_SIZE*y+(x+1));
+                float u1_1_0 = *(grid+GRID_SIZE*y+(x+1));
                 *(grid+GRID_SIZE*y+x) = G * u1_1_0;
             }
             else if (x==0&&y==GRID_SIZE-1) 
             {
                 // corner condition 2: x = 0, y = GRID_SIZE - 1
-                float u1_0_y1 = *(grid_1+GRID_SIZE*(y-1)+x);
+                float u1_0_y1 = *(grid+GRID_SIZE*(y-1)+x);
                 *(grid+GRID_SIZE*y+x) = G * u1_0_y1;
             }
             else if (x==GRID_SIZE-1&&y==0) 
             {
                 // corner condition 3: x = GRID_SIZE - 1, y = 0
-                float u1_x1_0 = *(grid_1+GRID_SIZE*y+(x-1));
+                float u1_x1_0 = *(grid+GRID_SIZE*y+(x-1));
                 *(grid+GRID_SIZE*y+x) = G * u1_x1_0;
             }
             else if (x==GRID_SIZE-1&&y==GRID_SIZE-1) 
             {
                 // corner condition 4: x = y = GRID_SIZE - 1
-                float u1_x_y1 = *(grid_1+GRID_SIZE*(y-1)+x);
+                float u1_x_y1 = *(grid+GRID_SIZE*(y-1)+x);
                 *(grid+GRID_SIZE*y+x) = G * u1_x_y1;
             }
             else
@@ -113,8 +113,10 @@ int main(int argc, char* argv[])
     float *grid_1 = (float *)calloc(GRID_SIZE*GRID_SIZE, sizeof(float));
     float *grid_2 = (float *)calloc(GRID_SIZE*GRID_SIZE, sizeof(float));
 
-    *(grid+GRID_SIZE*(GRID_SIZE/2-1)+(GRID_SIZE/2-1)) = 1.0f;
-
+    *(grid+GRID_SIZE*(GRID_SIZE/2)+(GRID_SIZE/2)) = 1.0f;
+    *(grid_1+GRID_SIZE*(GRID_SIZE/2)+(GRID_SIZE/2)) = 1.0f;
+    *(grid_2+GRID_SIZE*(GRID_SIZE/2)+(GRID_SIZE/2)) = 1.0f;
+    print_grid(grid);
     for(int i = 0; i<iter; i++){
         simulation(grid, grid_1, grid_2);
         print_grid(grid);
