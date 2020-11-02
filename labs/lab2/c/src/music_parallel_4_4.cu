@@ -11,48 +11,50 @@
 
 __global__ void simulation_kernel(float *grid, float *grid_1, float *grid_2)
 {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = idx/GRID_SIZE;
-    int x = idx%GRID_SIZE;
+    //int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    //int y = idx/GRID_SIZE;
+    //int x = idx%GRID_SIZE;
+    int x = blockIdx.x;
+    int y = threadIdx.x;
     if(y==0&&x!=0&&x!=GRID_SIZE-1)
     {//boundary condition 1: y = 0
-        float u1_x_1 = *(grid_1+GRID_SIZE*(y+1)+x);
+        float u1_x_1 = *(grid+GRID_SIZE*(y+1)+x);
         *(grid+GRID_SIZE*y+x) = G * u1_x_1;
     } 
     else if (y==GRID_SIZE-1&&x!=0&&x!=GRID_SIZE-1)
     {//boundary condition 2: y = GRID_SIZE-1
-        float u1_x_y1 = *(grid_1+GRID_SIZE*(y-1)+x);
+        float u1_x_y1 = *(grid+GRID_SIZE*(y-1)+x);
         *(grid+GRID_SIZE*y+x) = G * u1_x_y1;
     }
     else if(x==0&&y!=0&&y!=GRID_SIZE-1)
     {//boundary condition 3: x = 0
-        float u1_1_y = *(grid_1+GRID_SIZE*y+(x+1));
+        float u1_1_y = *(grid+GRID_SIZE*y+(x+1));
         *(grid+GRID_SIZE*y+x) = G * u1_1_y;
     } 
     else if (x==GRID_SIZE-1&&y!=0&&y!=GRID_SIZE-1)
     {//boundary condition 4: x = GRID_SIZE-1
-        float u1_x1_y = *(grid_1+GRID_SIZE*y+(x-1));
+        float u1_x1_y = *(grid+GRID_SIZE*y+(x-1));
         *(grid+GRID_SIZE*y+x) = G * u1_x1_y;
     }
     else if (x==0&&y==0) 
     {// corner condition 1: x = y = 0
-        float u1_1_0 = *(grid_1+GRID_SIZE*y+(x+1));
+        float u1_1_0 = *(grid+GRID_SIZE*y+(x+1));
         *(grid+GRID_SIZE*y+x) = G * u1_1_0;
     }
     else if (x==0&&y==GRID_SIZE-1) 
     {// corner condition 2: x = 0, y = GRID_SIZE - 1
-        float u1_0_y1 = *(grid_1+GRID_SIZE*(y-1)+x);
+        float u1_0_y1 = *(grid+GRID_SIZE*(y-1)+x);
         *(grid+GRID_SIZE*y+x) = G * u1_0_y1;
     }
     else if (x==GRID_SIZE-1&&y==0) 
     {// corner condition 3: x = GRID_SIZE - 1, y = 0
-        float u1_x1_0 = *(grid_1+GRID_SIZE*y+(x-1));
+        float u1_x1_0 = *(grid+GRID_SIZE*y+(x-1));
         *(grid+GRID_SIZE*y+x) = G * u1_x1_0;
     }
     else if (x==GRID_SIZE-1&&y==GRID_SIZE-1) 
     {
         // corner condition 4: x = y = GRID_SIZE - 1
-        float u1_x_y1 = *(grid_1+GRID_SIZE*(y-1)+x);
+        float u1_x_y1 = *(grid+GRID_SIZE*(y-1)+x);
         *(grid+GRID_SIZE*y+x) = G * u1_x_y1;
     }
     else
@@ -61,11 +63,11 @@ __global__ void simulation_kernel(float *grid, float *grid_1, float *grid_2)
         float u2_x_y = *(grid_2+GRID_SIZE*y+x);
 
         
-        float u1_1x_y = *(grid+GRID_SIZE*y+(x+1));
-        float u1_x1_y = *(grid+GRID_SIZE*y+(x-1));
+        float u1_1x_y = *(grid_1+GRID_SIZE*y+(x+1));
+        float u1_x1_y = *(grid_1+GRID_SIZE*y+(x-1));
 
-        float u1_x_1y = *(grid+GRID_SIZE*(y+1)+x);
-        float u1_x_y1 = *(grid+GRID_SIZE*(y-1)+x);
+        float u1_x_1y = *(grid_1+GRID_SIZE*(y+1)+x);
+        float u1_x_y1 = *(grid_1+GRID_SIZE*(y-1)+x);
                 
         *(grid+GRID_SIZE*y+x) = (RHO*(u1_x1_y + u1_1x_y + u1_x_y1 + u1_x_1y - 4*u1_x_y) + 2*u1_x_y - (1-MIU)*u2_x_y )/(1+MIU);
     }
