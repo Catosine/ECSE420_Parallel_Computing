@@ -20,43 +20,43 @@ __global__ void simulation_kernel(float *grid, float *grid_1, float *grid_2)
         int x = (idx+i)%GRID_SIZE;
         if(y==0&&x!=0&&x!=GRID_SIZE-1)
         {//boundary condition 1: y = 0
-            float u1_x_1 = *(grid_1+GRID_SIZE*(y+1)+x);
+            float u1_x_1 = *(grid+GRID_SIZE*(y+1)+x);
             *(grid+GRID_SIZE*y+x) = G * u1_x_1;
         } 
         else if (y==GRID_SIZE-1&&x!=0&&x!=GRID_SIZE-1)
         {//boundary condition 2: y = GRID_SIZE-1
-            float u1_x_y1 = *(grid_1+GRID_SIZE*(y-1)+x);
+            float u1_x_y1 = *(grid+GRID_SIZE*(y-1)+x);
             *(grid+GRID_SIZE*y+x) = G * u1_x_y1;
         }
         else if(x==0&&y!=0&&y!=GRID_SIZE-1)
         {//boundary condition 3: x = 0
-            float u1_1_y = *(grid_1+GRID_SIZE*y+(x+1));
+            float u1_1_y = *(grid+GRID_SIZE*y+(x+1));
             *(grid+GRID_SIZE*y+x) = G * u1_1_y;
         } 
         else if (x==GRID_SIZE-1&&y!=0&&y!=GRID_SIZE-1)
         {//boundary condition 4: x = GRID_SIZE-1
-            float u1_x1_y = *(grid_1+GRID_SIZE*y+(x-1));
+            float u1_x1_y = *(grid+GRID_SIZE*y+(x-1));
             *(grid+GRID_SIZE*y+x) = G * u1_x1_y;
         }
         else if (x==0&&y==0) 
         {// corner condition 1: x = y = 0
-            float u1_1_0 = *(grid_1+GRID_SIZE*y+(x+1));
+            float u1_1_0 = *(grid+GRID_SIZE*y+(x+1));
             *(grid+GRID_SIZE*y+x) = G * u1_1_0;
         }
         else if (x==0&&y==GRID_SIZE-1) 
         {// corner condition 2: x = 0, y = GRID_SIZE - 1
-            float u1_0_y1 = *(grid_1+GRID_SIZE*(y-1)+x);
+            float u1_0_y1 = *(grid+GRID_SIZE*(y-1)+x);
             *(grid+GRID_SIZE*y+x) = G * u1_0_y1;
         }
         else if (x==GRID_SIZE-1&&y==0) 
         {// corner condition 3: x = GRID_SIZE - 1, y = 0
-            float u1_x1_0 = *(grid_1+GRID_SIZE*y+(x-1));
+            float u1_x1_0 = *(grid+GRID_SIZE*y+(x-1));
             *(grid+GRID_SIZE*y+x) = G * u1_x1_0;
         }
         else if (x==GRID_SIZE-1&&y==GRID_SIZE-1) 
         {
             // corner condition 4: x = y = GRID_SIZE - 1
-            float u1_x_y1 = *(grid_1+GRID_SIZE*(y-1)+x);
+            float u1_x_y1 = *(grid+GRID_SIZE*(y-1)+x);
             *(grid+GRID_SIZE*y+x) = G * u1_x_y1;
         }
         else
@@ -65,11 +65,11 @@ __global__ void simulation_kernel(float *grid, float *grid_1, float *grid_2)
             float u2_x_y = *(grid_2+GRID_SIZE*y+x);
 
             
-            float u1_1x_y = *(grid+GRID_SIZE*y+(x+1));
-            float u1_x1_y = *(grid+GRID_SIZE*y+(x-1));
+            float u1_1x_y = *(grid_1+GRID_SIZE*y+(x+1));
+            float u1_x1_y = *(grid_1+GRID_SIZE*y+(x-1));
 
-            float u1_x_1y = *(grid+GRID_SIZE*(y+1)+x);
-            float u1_x_y1 = *(grid+GRID_SIZE*(y-1)+x);
+            float u1_x_1y = *(grid_1+GRID_SIZE*(y+1)+x);
+            float u1_x_y1 = *(grid_1+GRID_SIZE*(y-1)+x);
                     
             *(grid+GRID_SIZE*y+x) = (RHO*(u1_x1_y + u1_1x_y + u1_x_y1 + u1_x_1y - 4*u1_x_y) + 2*u1_x_y - (1-MIU)*u2_x_y )/(1+MIU);
         }
@@ -103,13 +103,16 @@ int main(int argc, char* argv[])
     float *grid = (float *)calloc(GRID_SIZE*GRID_SIZE, sizeof(float));
 
     float *c_grid, *c_grid_1, *c_grid_2;
+    
+    *(grid+GRID_SIZE*(GRID_SIZE/2)+(GRID_SIZE/2)) = 1.0f;
     cudaMalloc((void **) &c_grid_1, GRID_SIZE*GRID_SIZE*sizeof(float));
     cudaMemcpy(c_grid_1, grid, GRID_SIZE*GRID_SIZE*sizeof(float), cudaMemcpyHostToDevice);
 
+    *(grid+GRID_SIZE*(GRID_SIZE/2)+(GRID_SIZE/2)) = 0.0f;
     cudaMalloc((void **) &c_grid_2, GRID_SIZE*GRID_SIZE*sizeof(float));
     cudaMemcpy(c_grid_2, grid, GRID_SIZE*GRID_SIZE*sizeof(float), cudaMemcpyHostToDevice);
 
-    *(grid+GRID_SIZE*(GRID_SIZE/2-1)+(GRID_SIZE/2-1)) = 1.0f;
+    //*(grid+GRID_SIZE*(GRID_SIZE/2-1)+(GRID_SIZE/2-1)) = 1.0f;
 
     cudaMalloc((void **) &c_grid, GRID_SIZE*GRID_SIZE*sizeof(float));
     cudaMemcpy(c_grid, grid, GRID_SIZE*GRID_SIZE*sizeof(float), cudaMemcpyHostToDevice);
@@ -122,8 +125,8 @@ int main(int argc, char* argv[])
         cudaMemcpy(c_grid_1, c_grid, GRID_SIZE*GRID_SIZE*sizeof(float), cudaMemcpyDeviceToDevice);
         cudaMemcpy(grid, c_grid, GRID_SIZE*GRID_SIZE*sizeof(float), cudaMemcpyDeviceToHost);
 
-        printf("Iteration \#%d\n",i);
-        print_grid(grid);
+        printf("#%d (%d, %d) %f\n",i, GRID_SIZE/2, GRID_SIZE/2, *(grid+GRID_SIZE*(GRID_SIZE/2)+GRID_SIZE/2));
+        //print_grid(grid);
 
     }
 

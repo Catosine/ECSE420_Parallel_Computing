@@ -98,13 +98,18 @@ int main(int argc, char* argv[])
     float *grid = (float *)calloc(GRID_SIZE*GRID_SIZE, sizeof(float));
 
     float *c_grid, *c_grid_1, *c_grid_2;
+    
+
+    *(grid+GRID_SIZE*(GRID_SIZE/2)+(GRID_SIZE/2)) = 1.0f;
+    
     cudaMalloc((void **) &c_grid_1, GRID_SIZE*GRID_SIZE*sizeof(float));
     cudaMemcpy(c_grid_1, grid, GRID_SIZE*GRID_SIZE*sizeof(float), cudaMemcpyHostToDevice);
 
+    *(grid+GRID_SIZE*(GRID_SIZE/2)+(GRID_SIZE/2)) = 0.0f;
     cudaMalloc((void **) &c_grid_2, GRID_SIZE*GRID_SIZE*sizeof(float));
     cudaMemcpy(c_grid_2, grid, GRID_SIZE*GRID_SIZE*sizeof(float), cudaMemcpyHostToDevice);
 
-    *(grid+GRID_SIZE*(GRID_SIZE/2-1)+(GRID_SIZE/2-1)) = 1.0f;
+    //*(grid+GRID_SIZE*(GRID_SIZE/2)+(GRID_SIZE/2)) = 1.0f;
 
     cudaMalloc((void **) &c_grid, GRID_SIZE*GRID_SIZE*sizeof(float));
     cudaMemcpy(c_grid, grid, GRID_SIZE*GRID_SIZE*sizeof(float), cudaMemcpyHostToDevice);
@@ -117,7 +122,7 @@ int main(int argc, char* argv[])
         cudaMemcpy(c_grid_1, c_grid, GRID_SIZE*GRID_SIZE*sizeof(float), cudaMemcpyDeviceToDevice);
         cudaMemcpy(grid, c_grid, GRID_SIZE*GRID_SIZE*sizeof(float), cudaMemcpyDeviceToHost);
 
-        printf("Iteration \#%d\n",i);
+        printf("Iteration #%d\n",i);
         print_grid(grid);
 
     }
