@@ -5,17 +5,17 @@
 #include <string.h>
 #include <gputimer.h>
 
-#define GRID_SIZE 4
+#define GRID_SIZE 512
 #define MIU 0.0002
 #define RHO 0.5
 #define G 0.75
-#define THREAD_SIZE 4
-#define BLOCK_SIZE 4
+#define THREAD_SIZE 16
+#define BLOCK_SIZE 512
 
 __global__ void simulation_kernel(float *grid, float *grid_1, float *grid_2, int block_n, int thread_n)
 {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int length = ((GRID_SIZE*GRID_SIZE)/block_n)/thread_n;
+    int length = ((GRID_SIZE*GRID_SIZE)/block_n)/thread_n;   
+    int idx = (blockIdx.x * blockDim.x + threadIdx.x)*length;
     for(int i=0; i<length; i++)
     {
         int y = (idx+i)/GRID_SIZE;
