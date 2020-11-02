@@ -123,7 +123,8 @@ int main(int argc, char* argv[])
 
     }
     timer.Stop();
-    printf("-----------\n");
+	
+    printf("------------------------------\n");
     printf("Runtime for simulation: %f ms\n", timer.Elapsed());
 
     cudaFree(c_grid);
