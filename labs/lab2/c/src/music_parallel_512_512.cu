@@ -3,17 +3,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <gputimer.h>
 
-#define GRID_SIZE 4
+#define GRID_SIZE 512
 #define MIU 0.0002
 #define RHO 0.5
 #define G 0.75
-#define THREAD_SIZE 4
+#define THREAD_SIZE 16
 
 __global__ void simulation_kernel(float *grid, float *grid_1, float *grid_2)
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int length = GRID_SIZE / blockDim.x;
+    int length = (GRID_SIZE*GRID_SIZE/blockDim.x) / blockDim.x;
     for(int i=0; i<length; i++)
     {
         int y = (idx+i)/GRID_SIZE;
@@ -63,14 +64,10 @@ __global__ void simulation_kernel(float *grid, float *grid_1, float *grid_2)
         {// center case: safe to compute
             float u1_x_y = *(grid_1+GRID_SIZE*y+x);
             float u2_x_y = *(grid_2+GRID_SIZE*y+x);
-
-            
             float u1_1x_y = *(grid_1+GRID_SIZE*y+(x+1));
             float u1_x1_y = *(grid_1+GRID_SIZE*y+(x-1));
-
             float u1_x_1y = *(grid_1+GRID_SIZE*(y+1)+x);
             float u1_x_y1 = *(grid_1+GRID_SIZE*(y-1)+x);
-                    
             *(grid+GRID_SIZE*y+x) = (RHO*(u1_x1_y + u1_1x_y + u1_x_y1 + u1_x_1y - 4*u1_x_y) + 2*u1_x_y - (1-MIU)*u2_x_y )/(1+MIU);
         }
     }
@@ -114,19 +111,29 @@ int main(int argc, char* argv[])
     cudaMalloc((void **) &c_grid, GRID_SIZE*GRID_SIZE*sizeof(float));
     cudaMemcpy(c_grid, grid, GRID_SIZE*GRID_SIZE*sizeof(float), cudaMemcpyHostToDevice);
     
+    GpuTimer timer, totalTimer;
+    float runtime;
     printf("Size of grid: %d nodes\n", GRID_SIZE*GRID_SIZE);
+    totalTimer.Start();
     for(int i = 0; i<iter; i++){
+	timer.Start();
         simulation_kernel <<<GRID_SIZE, THREAD_SIZE>>>(c_grid, c_grid_1, c_grid_2);
         cudaDeviceSynchronize();
+	timer.Stop();
+	runtime = timer.Elapsed();
 
         cudaMemcpy(c_grid_2, c_grid_1, GRID_SIZE*GRID_SIZE*sizeof(float), cudaMemcpyDeviceToDevice);
         cudaMemcpy(c_grid_1, c_grid, GRID_SIZE*GRID_SIZE*sizeof(float), cudaMemcpyDeviceToDevice);
         cudaMemcpy(grid, c_grid, GRID_SIZE*GRID_SIZE*sizeof(float), cudaMemcpyDeviceToHost);
-
-        //printf("#%d (%d, %d) %f\n",i, GRID_SIZE/2, GRID_SIZE/2, *(grid+GRID_SIZE*(GRID_SIZE/2)+GRID_SIZE/2));
-        print_grid(grid);
+	
+	printf("Runtime for #%d: %f ms\n", i, runtime);
+        printf("#%d (%d, %d) %f\n",i, GRID_SIZE/2, GRID_SIZE/2, *(grid+GRID_SIZE*(GRID_SIZE/2)+GRID_SIZE/2));
+        //print_grid(grid);
 
     }
+    totalTimer.Stop();
+    printf("-------------------\n");
+    printf("Total Runtime for Simulation: %fms\n", totalTimer.Elapsed());
 
     cudaFree(c_grid);
     cudaFree(c_grid_1);

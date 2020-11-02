@@ -90,16 +90,20 @@ int main(int argc, char* argv[])
     
     printf("Size of the grid: %d nodes\n", GRID_SIZE*GRID_SIZE);
     
-    clock_t start = clock();
+    clock_t start, end;
+    //clock_t start = clock();
     for(int i = 0; i<iter; i++){
-        simulation(grid, grid_1, grid_2);
-        //print_grid(grid);
-        printf("#%d (%d,%d): %f\n", i, 2, 2, *(grid+GRID_SIZE*2+2));
+    	start = clock();
+	simulation(grid, grid_1, grid_2);
+        end = clock();
+	print_grid(grid);
+        //printf("#%d (%d,%d): %f\n", i, 2, 2, *(grid+GRID_SIZE*2+2));
+    	printf("Runtime for #%d: %f ms\n", i, (double)(end-start)*1000/CLOCKS_PER_SEC);
     }
-    clock_t end = clock();
+    //clock_t end = clock();
 
-    printf("------------------------------\n");
-    printf("Runtime for simluation: %f ms\n", (double)(end-start)*1000/CLOCKS_PER_SEC);
+    //printf("------------------------------\n");
+    //printf("Runtime for simluation: %f ms\n", (double)(end-start)*1000/CLOCKS_PER_SEC);
 
     grid=NULL;
     grid_1=NULL;
