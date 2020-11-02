@@ -25,30 +25,30 @@ int simulation(float *grid, float *grid_1, float *grid_2)
     // compute edges
     for(int i=1;i<GRID_SIZE-1;i++)
     {
-        float temp = *(grid_1+GRID_SIZE*i+1);
+        float temp = *(grid+GRID_SIZE*i+1);
         *(grid+GRID_SIZE*i) = G * temp;
 
-        temp = *(grid_1+GRID_SIZE*i+GRID_SIZE-2);
+        temp = *(grid+GRID_SIZE*i+GRID_SIZE-2);
         *(grid+GRID_SIZE*i+GRID_SIZE-1) = G * temp;
 
-        temp = *(grid_1+GRID_SIZE+i);
+        temp = *(grid+GRID_SIZE+i);
         *(grid+i) = G * temp;
 
-        temp = *(grid_1+GRID_SIZE*(GRID_SIZE-2)+i);
+        temp = *(grid+GRID_SIZE*(GRID_SIZE-2)+i);
         *(grid+GRID_SIZE*(GRID_SIZE-1)+i) = G * temp;
     }
 
     // compute corner
-    float temp = *(grid_1+GRID_SIZE);
+    float temp = *(grid+GRID_SIZE);
     *(grid) = G * temp;
 
-    temp = *(grid_1+GRID_SIZE-2);
+    temp = *(grid+GRID_SIZE-2);
     *(grid+GRID_SIZE-1) = G * temp;
 
-    temp = *(grid_1+GRID_SIZE*(GRID_SIZE-2));
+    temp = *(grid+GRID_SIZE*(GRID_SIZE-2));
     *(grid+GRID_SIZE*(GRID_SIZE-1)) = G * temp;
 
-    temp = *(grid_1+GRID_SIZE*(GRID_SIZE-2)+GRID_SIZE-1);
+    temp = *(grid+GRID_SIZE*(GRID_SIZE-2)+GRID_SIZE-1);
     *(grid+GRID_SIZE*(GRID_SIZE-1)+GRID_SIZE-1) = G * temp;
 
     // for(int y=0; y<GRID_SIZE; y++){
@@ -157,8 +157,8 @@ int main(int argc, char* argv[])
     
     for(int i = 0; i<iter; i++){
         simulation(grid, grid_1, grid_2);
-        //print_grid(grid);
-        printf("#%d (%d,%d): %f\n", i, 2, 2, *(grid+GRID_SIZE*2+2));
+        print_grid(grid);
+        //printf("#%d (%d,%d): %f\n", i, 2, 2, *(grid+GRID_SIZE*2+2));
     }
 
     grid=NULL;
