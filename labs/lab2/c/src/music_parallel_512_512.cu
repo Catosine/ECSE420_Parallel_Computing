@@ -114,6 +114,7 @@ int main(int argc, char* argv[])
     
     GpuTimer timer, totalTimer;
     float runtime;
+    float art;
     printf("Size of grid: %d nodes\n", GRID_SIZE*GRID_SIZE);
     totalTimer.Start();
     for(int i = 0; i<iter; i++){
@@ -122,7 +123,7 @@ int main(int argc, char* argv[])
         cudaDeviceSynchronize();
 	timer.Stop();
 	runtime = timer.Elapsed();
-
+	art+=runtime;
         cudaMemcpy(c_grid_2, c_grid_1, GRID_SIZE*GRID_SIZE*sizeof(float), cudaMemcpyDeviceToDevice);
         cudaMemcpy(c_grid_1, c_grid, GRID_SIZE*GRID_SIZE*sizeof(float), cudaMemcpyDeviceToDevice);
         cudaMemcpy(grid, c_grid, GRID_SIZE*GRID_SIZE*sizeof(float), cudaMemcpyDeviceToHost);
@@ -135,7 +136,7 @@ int main(int argc, char* argv[])
     totalTimer.Stop();
     printf("-------------------\n");
     printf("Total Runtime for Simulation: %fms\n", totalTimer.Elapsed());
-
+    printf("Avg. runtime per iteration: %fms\n", art/iter);
     cudaFree(c_grid);
     cudaFree(c_grid_1);
     cudaFree(c_grid_2);

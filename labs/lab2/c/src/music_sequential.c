@@ -3,7 +3,7 @@
 #include <string.h>
 #include <time.h>
 
-#define GRID_SIZE 4
+#define GRID_SIZE 512
 #define MIU 0.0002
 #define RHO 0.5
 #define G 0.75
@@ -92,10 +92,12 @@ int main(int argc, char* argv[])
     
     clock_t start, end;
     clock_t s = clock();
+    int rt;
     for(int i = 0; i<iter; i++){
     	start = clock();
 	simulation(grid, grid_1, grid_2);
         end = clock();
+	rt += end - start;
 	//print_grid(grid);
         printf("#%d (%d,%d): %f\n", i, GRID_SIZE/2, GRID_SIZE/2, *(grid+GRID_SIZE*(GRID_SIZE/2)+GRID_SIZE/2));
     	printf("Runtime for #%d: %f ms\n", i, (double)(end-start)*1000/CLOCKS_PER_SEC);
@@ -104,7 +106,7 @@ int main(int argc, char* argv[])
 
     printf("------------------------------\n");
     printf("Runtime for simluation: %f ms\n", (double)(t-s)*1000/CLOCKS_PER_SEC);
-
+    printf("Avg. runtime per iteration %f ms\n", (double)(rt)*1000/(CLOCKS_PER_SEC*iter));
     grid=NULL;
     grid_1=NULL;
     grid_2=NULL;
