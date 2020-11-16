@@ -25,7 +25,7 @@ __global__ void kernel(int* nodePtrs, int* nodeNeightbors, int* nodeStatus, int*
     __syncthreads();
 
     int idx = atomicAdd(idxCurrLevelNodes, 1);
-    
+     
     while(idx < INPUT4_LEN)
     {
         // get node
@@ -60,7 +60,6 @@ __global__ void kernel(int* nodePtrs, int* nodeNeightbors, int* nodeStatus, int*
             if (bidx >= sharedQueueSize)
             {
                 //copy to queue;
-                __syncthreads();
                 if (threadIdx.x==0)
                 {
                     int boffset = atomicAdd(outputBlockOffset, 1);
@@ -78,7 +77,6 @@ __global__ void kernel(int* nodePtrs, int* nodeNeightbors, int* nodeStatus, int*
         idx = atomicAdd(idxCurrLevelNodes, 1);
     }
 
-    __syncthreads();
     if (threadIdx.x==0)
     {
         int boffset = atomicAdd(outputBlockOffset, 0) - 1;
@@ -173,7 +171,8 @@ void compareFiles(char *file_name1, char *file_name2)
     int error = 0, pos = 0, line = 1;
 
     // iterate loop till end of file
-    while (ch1 != EOF && ch2 != EOF)
+    while (feof(fp1) && feof(fp2))
+    //while (ch1 != EOF && ch2 != EOF)
     {
         pos++;
 
@@ -291,13 +290,18 @@ int main(int argc, char* argv[])
         cudaMemcpy(c_data2, data2, INPUT2_LEN*sizeof(int), cudaMemcpyHostToDevice);
         cudaMemcpy(c_data3, data3, INPUT3_LEN*4*sizeof(int), cudaMemcpyHostToDevice);
         cudaMemcpy(c_data4, data4, INPUT4_LEN*sizeof(int), cudaMemcpyHostToDevice);
-        cudaMemcpy(c_idxCurrLevelNodes, &idxCurrLevelNodes, sizeof(int), cudaMemcpyHostToDevice);
+        cudaError_t err = cudaMemcpy(c_idxCurrLevelNodes, &idxCurrLevelNodes, sizeof(int), cudaMemcpyHostToDevice);
+	
+	if (err != cudaSuccess)
+	{
+		printf("error: %s\n", cudaGetErrorString(err));
+	}
 
         // run
         GpuTimer timer;
         timer.Start();
         kernel <<<numBlock, blockSize, sharedQueueSize*sizeof(int)>>> (c_data1, c_data2, c_data3, c_data4, c_idxCurrLevelNodes, c_outputQueue, sharedQueueSize);
-	    cudaDeviceSynchronize();
+	cudaDeviceSynchronize();
         timer.Stop();
         printf("Block Queuing Kernel Runtime (blockSize=%d, numBlock=%d, blockQueueCapacity=%d): %f ms\n", numBlock, blockSize, sharedQueueSize, timer.Elapsed());
 
