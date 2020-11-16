@@ -8,8 +8,8 @@
 #define INPUT2_LEN 50000
 #define INPUT3_LEN 200000
 #define INPUT4_LEN 10000
-#define N_BLOCK 32
-#define N_THREAD 10
+#define N_BLOCK 10
+#define N_THREAD 32
 
 __global__ void kernel(int* nodePtrs, int* nodeNeightbors, int* nodeStatus, int* currLevelNodes, int* idxCurrLevelNodes, int* outputQueue, int* idxOutputQueue)
 {
@@ -266,7 +266,7 @@ int main(int argc, char* argv[])
         kernel <<<N_BLOCK, N_THREAD>>> (c_data1, c_data2, c_data3, c_data4, c_idxCurrLevelNodes, c_outputQueue, c_idxOutputQueue);
 	    cudaDeviceSynchronize();
 	timer.Stop();
-	printf("Global Queuing Kernel Runtime: %f ms\n", timer.Elapsed());
+	printf("Global Queuing Kernel Runtime (numBlock=%d, blockSize=%d): %f ms\n", N_BLOCK, N_THREAD, timer.Elapsed());
         // data3 retrival
         cudaMemcpy(data3, c_data3, INPUT3_LEN*4*sizeof(int), cudaMemcpyDeviceToHost);
 
