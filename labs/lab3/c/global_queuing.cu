@@ -139,9 +139,11 @@ void compareFiles(char *file_name1, char *file_name2)
     int error = 0, pos = 0, line = 1;
 
     // iterate loop till end of file
-    while (ch1 != EOF && ch2 != EOF)
+    while (feof(fp1) && feof(fp2))
     {
-        pos++;
+	printf("line: %d\n", line);
+        printf("ch1: %c, ch2: %c\n", ch1, ch2);
+	pos++;
 
         // if both variable encounters new
         // line then line variable is incremented
@@ -166,7 +168,7 @@ void compareFiles(char *file_name1, char *file_name2)
         ch2 = getc(fp2);
     }
 
-    printf("Total Errors : %d\t", error);
+    printf("Total Errors : %d\n", error);
 }
 
 void compareNextLevelNodeFiles(char *file_name1, char *file_name2)
@@ -216,8 +218,7 @@ void compareNextLevelNodeFiles(char *file_name1, char *file_name2)
         }
     }
 
-    fprintf(stderr, "No errors!\n");
-    exit(1);
+    printf("No errors!\n");
 
 }
 
@@ -287,8 +288,10 @@ int main(int argc, char* argv[])
             fprintf(queueStatus, "%d\n", *(output+i));
         }
         fclose(queueStatus);
-
+	
+	printf("Checking gq_nodeOutput.raw...\n");
         compareFiles(argv[5], "sol_nodeOutput.raw");
+	printf("Checking gq_nextLevelNodes.raw...\n");
         compareNextLevelNodeFiles(argv[6], "sol_nextLevelNodes.raw");
 
         // clean up
