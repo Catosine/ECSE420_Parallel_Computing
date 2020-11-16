@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
+#include "gputimer.h"
 
 int read_input_one_two_four(int **input1, const char *filepath)
 {
@@ -216,11 +217,15 @@ int main(int argc, char *argv[])
     cudaMallocManaged((int **)&nextLevelNodes, nNodePtrs * sizeof(int));
     cudaMallocManaged((int **)&nNextLevelNodes, sizeof(int));
     *nNextLevelNodes = 0;
+    GpuTimer timer;
+    timer.Start();
     BFS<<<nBlocks, blockSz>>>(nNodePtrs, nNodeNeighbours, nNodes, nCurrLevelNodes, blockQueCap,
                               nodePtrs, nodeNeighbours, nodesVisited, nodesGate,
                               nodesInput, nodesOutput, currLevelNodes,
                               nextLevelNodes, nNextLevelNodes);
     cudaDeviceSynchronize();
+    timer.Stop();
+    printf("Kernel runtime: %f ms\n", timer.Elapsed());
     printf("nNextLevelNodes : %d\n", *nNextLevelNodes);
 
     write_output(nNodes, *nNextLevelNodes, nodesOutput, nextLevelNodes, output_file_1, output_file_2);

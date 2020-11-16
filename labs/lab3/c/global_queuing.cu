@@ -8,8 +8,8 @@
 #define INPUT2_LEN 50000
 #define INPUT3_LEN 200000
 #define INPUT4_LEN 10000
-#define N_BLOCK 10
-#define N_THREAD 32
+#define N_BLOCK 128
+#define N_THREAD 35
 
 __global__ void kernel(int* nodePtrs, int* nodeNeightbors, int* nodeStatus, int* currLevelNodes, int* idxCurrLevelNodes, int* outputQueue, int* idxOutputQueue)
 {

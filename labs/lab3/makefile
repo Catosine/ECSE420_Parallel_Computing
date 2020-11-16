@@ -22,7 +22,7 @@ clean_block_queuing:
 	rm ./output/bq_nodeOutput.raw ./output/bq_nextLevelNode.raw
 
 run_block_queuing: block_queuing output
-	./block_queuing 25 32 32 ./input1.raw ./input2.raw ./input3.raw ./input4.raw ./output/bq_nodeOutput.raw ./output/bq_nextLevelNode.raw
+	./block_queuing 35 64 64 ./input1.raw ./input2.raw ./input3.raw ./input4.raw ./output/bq_nodeOutput.raw ./output/bq_nextLevelNode.raw
 
 run_global_queuing: global_queuing output
 	./global_queuing ./input1.raw ./input2.raw ./input3.raw ./input4.raw ./output/gq_nodeOutput.raw ./output/gq_nextLevelNode.raw
