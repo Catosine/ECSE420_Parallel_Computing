@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "gputimer.h"
 #define INPUT1_LEN 200001
 #define INPUT2_LEN 50000
 #define INPUT3_LEN 200000
@@ -260,9 +261,12 @@ int main(int argc, char* argv[])
         cudaMemcpy(c_idxOutputQueue, &idxOutputQueue, sizeof(int), cudaMemcpyHostToDevice);
 
         // run
+	GpuTimer timer;
+	timer.Start();
         kernel <<<N_BLOCK, N_THREAD>>> (c_data1, c_data2, c_data3, c_data4, c_idxCurrLevelNodes, c_outputQueue, c_idxOutputQueue);
 	    cudaDeviceSynchronize();
-
+	timer.Stop();
+	printf("Global Queuing Kernel Runtime: %f ms\n", timer.Elapsed());
         // data3 retrival
         cudaMemcpy(data3, c_data3, INPUT3_LEN*4*sizeof(int), cudaMemcpyDeviceToHost);
 

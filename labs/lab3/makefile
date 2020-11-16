@@ -1,5 +1,5 @@
 global_queuing:
-	nvcc ./c/global_queuing.cu -o ./global_queuing
+	nvcc -I ./c/inc ./c/global_queuing.cu -o ./global_queuing
 
 output:
 	mkdir ./output
