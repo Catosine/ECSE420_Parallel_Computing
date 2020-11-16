@@ -9,7 +9,7 @@
 #define INPUT3_LEN 200000
 #define INPUT4_LEN 10000
 
-__global__ void kernel(int* nodePtrs, int* nodeNeightbors, int* nodeStatus, int* currLevelNodes, int* idxCurrLevelNodes, int* outputQueue, int sharedQueueSize)
+__global__ void kernel(int* nodePtrs, int* nodeNeightbors, int* nodeStatus, int* currLevelNodes, int* idxCurrLevelNodes, int* outputQueue, int* numOutputQueue, int sharedQueueSize)
 {
     extern __shared__ int blockQueue[];
     __shared__ int blockCounter[1];
@@ -25,7 +25,7 @@ __global__ void kernel(int* nodePtrs, int* nodeNeightbors, int* nodeStatus, int*
     __syncthreads();
 
     int idx = atomicAdd(idxCurrLevelNodes, 1);
-    
+     
     while(idx < INPUT4_LEN)
     {
         // get node
@@ -35,56 +35,70 @@ __global__ void kernel(int* nodePtrs, int* nodeNeightbors, int* nodeStatus, int*
         for(; nbr_idx<=nbr_end; nbr_idx++)
 	    {   
             int nbr = *(nodeNeightbors+nbr_idx);
-            
-            atomicAdd(nodeStatus+nbr*4, 1);
-            int gate = *(nodeStatus+nbr*4+1);
-            int input1 = *(nodeStatus+nbr*4+2);
-            int input2 = *(nodeStatus+node*4+3);
-            int result = -3;
-            //AND
-            if (gate == 0) {result = (input1 & input2);}
-            //OR
-            else if (gate == 1) {result = (input1 | input2);}
-            //NAND
-            else if (gate == 2) {result = !(input1 & input2);}
-            //NOR
-            else if (gate == 3) {result = !(input1 | input2);}
-            //XOR
-            else if (gate == 4) {result = (input1 ^ input2);}
-            //XNOR
-            else if (gate == 5) {result = !(input1 ^ input2);}
-            else {result = -1;}
-            *(nodeStatus+nbr*4+3) = result;
-
-            int bidx = atomicAdd(blockCounter, 1);
-            if (bidx >= sharedQueueSize)
-            {
-                //copy to queue;
-                __syncthreads();
-                if (threadIdx.x==0)
-                {
-                    int boffset = atomicAdd(outputBlockOffset, 1);
-                    memcpy(outputQueue+boffset*sharedQueueSize, blockQueue, sharedQueueSize*sizeof(int));
-                    *blockCounter = 0;
-                }
-                __syncthreads();
-            }
-            //save to block mem
-            bidx = atomicAdd(blockCounter, 1);
-            *(blockQueue+bidx) = nbr;
-            
+            if(*(nodeStatus+nbr*4)==0)
+	    {    
+		    atomicAdd(nodeStatus+nbr*4, 1);
+		    int gate = *(nodeStatus+nbr*4+1);
+		    int input1 = *(nodeStatus+nbr*4+2);
+		    int input2 = *(nodeStatus+node*4+3);
+		    int result = -3;
+		    //AND
+		    if (gate == 0) {result = (input1 & input2);}
+		    //OR
+		    else if (gate == 1) {result = (input1 | input2);}
+		    //NAND
+		    else if (gate == 2) {result = !(input1 & input2);}
+		    //NOR
+		    else if (gate == 3) {result = !(input1 | input2);}
+		    //XOR
+		    else if (gate == 4) {result = (input1 ^ input2);}
+		    //XNOR
+		    else if (gate == 5) {result = !(input1 ^ input2);}
+		    else {result = -1;}
+		    *(nodeStatus+nbr*4+3) = result;
+		    
+		    int bidx = atomicAdd(blockCounter, 1);
+		    atomicAdd(numOutputQueue, 1);
+		    if (bidx < sharedQueueSize){
+		    	*(blockQueue+bidx) = nbr;
+		    } else {
+			*(outputQueue+blockDim.x*sharedQueueSize+bidx-sharedQueueSize) = nbr;
+		    }
+		    /*
+		    int bidx = atomicAdd(blockCounter, 1);
+		    if (bidx >= sharedQueueSize)
+		    {
+			//copy to queue;
+			if (threadIdx.x==0)
+			{
+			    int boffset = atomicAdd(outputBlockOffset, 1);
+			    memcpy(outputQueue+boffset*sharedQueueSize, blockQueue, sharedQueueSize*sizeof(int));
+			    *blockCounter = 0;
+			}
+			__syncthreads();
+		    }
+		    //save to block mem
+		    bidx = atomicAdd(blockCounter, 1);
+		    *(blockQueue+bidx) = nbr;
+		    */
+	    }
         }
         // increment idx by 1
         idx = atomicAdd(idxCurrLevelNodes, 1);
     }
-
+    if (threadIdx.x==0)
+    {
+	    memcpy(outputQueue+blockIdx.x*sharedQueueSize, blockQueue, sharedQueueSize*sizeof(int));
+    }
     __syncthreads();
+    /*
     if (threadIdx.x==0)
     {
         int boffset = atomicAdd(outputBlockOffset, 0) - 1;
         memcpy(outputQueue+boffset*sharedQueueSize, blockQueue, atomicAdd(blockCounter, 1)*sizeof(int));            
     }
     __syncthreads();
+    */
 }
 
 int readFile124(char* name, int* data)
@@ -147,7 +161,8 @@ void sort(int *pointer, int size){
     //get from https://stackoverflow.com/questions/13012594/sorting-with-pointers-instead-of-indexes
     int *i, *j, temp;
     for(i = pointer; i < pointer + size; i++){
-        for(j = i + 1; j < pointer + size; j++){
+	    printf("count %d\n", i-pointer);
+	for(j = i + 1; j < pointer + size; j++){
             if(*j < *i){
                 temp = *j;
                 *j = *i;
@@ -173,7 +188,8 @@ void compareFiles(char *file_name1, char *file_name2)
     int error = 0, pos = 0, line = 1;
 
     // iterate loop till end of file
-    while (ch1 != EOF && ch2 != EOF)
+    while (feof(fp1) && feof(fp2))
+    //while (ch1 != EOF && ch2 != EOF)
     {
         pos++;
 
@@ -200,7 +216,7 @@ void compareFiles(char *file_name1, char *file_name2)
         ch2 = getc(fp2);
     }
 
-    printf("Total Errors : %d\t", error);
+    printf("Total Errors : %d\n", error);
 }
 
 void compareNextLevelNodeFiles(char *file_name1, char *file_name2)
@@ -235,7 +251,8 @@ void compareNextLevelNodeFiles(char *file_name1, char *file_name2)
     int temp2;
 
     while ((fscanf(fp_1, "%d", &temp1) == 1) && (fscanf(fp_2, "%d", &temp2) == 1)) {
-        (input1)[counter] = temp1;
+        //printf("Counter = %d\n", counter);
+	(input1)[counter] = temp1;
         (input2)[counter] = temp2;
         counter++;
     }
@@ -244,14 +261,14 @@ void compareNextLevelNodeFiles(char *file_name1, char *file_name2)
     sort(input2, len_2);
 
     for(int i=0; i< len_1; i++){
+	    printf("#%d (%d %d)\n", i, input1[i], input2[i]);
         if(input1[i] != input2[i]){
             fprintf(stderr, "Something goes wrong\n");
             exit(1);
         }
     }
 
-    fprintf(stderr, "No errors!\n");
-    exit(1);
+    printf("No errors!\n");
 
 }
 
@@ -278,26 +295,28 @@ int main(int argc, char* argv[])
         readFile124(argv[7], data4);
         // setup idxNextLevelNodes
         int idxCurrLevelNodes = 0;
+	int numOutputQueue = 0;
 
         // cuda setup
-        int *c_data1, *c_data2, *c_data3, *c_data4, *c_outputQueue, *c_idxCurrLevelNodes;
+        int *c_data1, *c_data2, *c_data3, *c_data4, *c_outputQueue, *c_idxCurrLevelNodes, *c_numOutputQueue;
         cudaMalloc((void **) &c_data1, INPUT1_LEN*sizeof(int));
         cudaMalloc((void **) &c_data2, INPUT2_LEN*sizeof(int));
         cudaMalloc((void **) &c_data3, INPUT3_LEN*4*sizeof(int));
         cudaMalloc((void **) &c_data4, INPUT4_LEN*sizeof(int));
         cudaMalloc((void **) &c_outputQueue, INPUT3_LEN*sizeof(int));
         cudaMalloc((void **) &c_idxCurrLevelNodes, sizeof(int));
+	cudaMalloc((void **) &c_numOutputQueue, sizeof(int));
         cudaMemcpy(c_data1, data1, INPUT1_LEN*sizeof(int), cudaMemcpyHostToDevice);
         cudaMemcpy(c_data2, data2, INPUT2_LEN*sizeof(int), cudaMemcpyHostToDevice);
         cudaMemcpy(c_data3, data3, INPUT3_LEN*4*sizeof(int), cudaMemcpyHostToDevice);
         cudaMemcpy(c_data4, data4, INPUT4_LEN*sizeof(int), cudaMemcpyHostToDevice);
         cudaMemcpy(c_idxCurrLevelNodes, &idxCurrLevelNodes, sizeof(int), cudaMemcpyHostToDevice);
-
+	cudaMemcpy(c_numOutputQueue, &numOutputQueue, sizeof(int), cudaMemcpyHostToDevice);
         // run
         GpuTimer timer;
         timer.Start();
-        kernel <<<numBlock, blockSize, sharedQueueSize*sizeof(int)>>> (c_data1, c_data2, c_data3, c_data4, c_idxCurrLevelNodes, c_outputQueue, sharedQueueSize);
-	    cudaDeviceSynchronize();
+        kernel <<<numBlock, blockSize, sharedQueueSize*sizeof(int)>>> (c_data1, c_data2, c_data3, c_data4, c_idxCurrLevelNodes, c_outputQueue, c_numOutputQueue, sharedQueueSize);
+	cudaDeviceSynchronize();
         timer.Stop();
         printf("Block Queuing Kernel Runtime (blockSize=%d, numBlock=%d, blockQueueCapacity=%d): %f ms\n", numBlock, blockSize, sharedQueueSize, timer.Elapsed());
 
@@ -305,8 +324,10 @@ int main(int argc, char* argv[])
         cudaMemcpy(data3, c_data3, INPUT3_LEN*4*sizeof(int), cudaMemcpyDeviceToHost);
 
         // outputs retrival
-        int* output = (int *)calloc(INPUT3_LEN, sizeof(int));
-        cudaMemcpy(output, c_outputQueue, INPUT3_LEN*sizeof(int), cudaMemcpyDeviceToHost);
+	cudaMemcpy(&numOutputQueue, c_numOutputQueue, sizeof(int), cudaMemcpyDeviceToHost);
+	numOutputQueue--;
+        int* output = (int *)calloc(numOutputQueue, sizeof(int));
+        cudaMemcpy(output, c_outputQueue, numOutputQueue*sizeof(int), cudaMemcpyDeviceToHost);
 
         // save gate status
         FILE *gateStatus = fopen(argv[8], "w");
@@ -319,14 +340,16 @@ int main(int argc, char* argv[])
 
         // save output
         FILE *queueStatus = fopen(argv[9], "w");
-        fprintf(queueStatus, "%d\n", INPUT3_LEN);
-        for(int i=0; i<INPUT3_LEN; i++)
+        fprintf(queueStatus, "%d\n", numOutputQueue);
+        for(int i=0; i<numOutputQueue; i++)
         {
             fprintf(queueStatus, "%d\n", *(output+i));
         }
         fclose(queueStatus);
-
+	
+	printf("Comparing nodeOutput.raw...\n");
         compareFiles(argv[8], "sol_nodeOutput.raw");
+	printf("Comparing nextLevelNodes.raw...\n");
         compareNextLevelNodeFiles(argv[9], "sol_nextLevelNodes.raw");
 
         // clean up
@@ -336,6 +359,7 @@ int main(int argc, char* argv[])
         cudaFree(c_data4);
         cudaFree(c_outputQueue);
         cudaFree(c_idxCurrLevelNodes);
+	cudaFree(c_numOutputQueue);
 
         free(data1);
         free(data2);
