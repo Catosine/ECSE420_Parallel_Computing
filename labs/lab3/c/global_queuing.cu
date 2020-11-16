@@ -109,6 +109,20 @@ int readFile3(char* name, int* data)
     return 0;
 }
 
+void sort(int *pointer, int size){
+    //get from https://stackoverflow.com/questions/13012594/sorting-with-pointers-instead-of-indexes
+    int *i, *j, temp;
+    for(i = pointer; i < pointer + size; i++){
+        for(j = i + 1; j < pointer + size; j++){
+            if(*j < *i){
+                temp = *j;
+                *j = *i;
+                *i = temp;
+            }
+        }
+    }
+}
+
 void compareFiles(char *file_name1, char *file_name2)
 {
 //get from https://www.tutorialspoint.com/c-program-to-compare-two-files-and-report-mismatches
