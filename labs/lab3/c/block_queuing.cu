@@ -35,43 +35,44 @@ __global__ void kernel(int* nodePtrs, int* nodeNeightbors, int* nodeStatus, int*
         for(; nbr_idx<=nbr_end; nbr_idx++)
 	    {   
             int nbr = *(nodeNeightbors+nbr_idx);
-            
-            atomicAdd(nodeStatus+nbr*4, 1);
-            int gate = *(nodeStatus+nbr*4+1);
-            int input1 = *(nodeStatus+nbr*4+2);
-            int input2 = *(nodeStatus+node*4+3);
-            int result = -3;
-            //AND
-            if (gate == 0) {result = (input1 & input2);}
-            //OR
-            else if (gate == 1) {result = (input1 | input2);}
-            //NAND
-            else if (gate == 2) {result = !(input1 & input2);}
-            //NOR
-            else if (gate == 3) {result = !(input1 | input2);}
-            //XOR
-            else if (gate == 4) {result = (input1 ^ input2);}
-            //XNOR
-            else if (gate == 5) {result = !(input1 ^ input2);}
-            else {result = -1;}
-            *(nodeStatus+nbr*4+3) = result;
+            if(*(nodeStatus+nbr*4)==0)
+	    {    
+		    atomicAdd(nodeStatus+nbr*4, 1);
+		    int gate = *(nodeStatus+nbr*4+1);
+		    int input1 = *(nodeStatus+nbr*4+2);
+		    int input2 = *(nodeStatus+node*4+3);
+		    int result = -3;
+		    //AND
+		    if (gate == 0) {result = (input1 & input2);}
+		    //OR
+		    else if (gate == 1) {result = (input1 | input2);}
+		    //NAND
+		    else if (gate == 2) {result = !(input1 & input2);}
+		    //NOR
+		    else if (gate == 3) {result = !(input1 | input2);}
+		    //XOR
+		    else if (gate == 4) {result = (input1 ^ input2);}
+		    //XNOR
+		    else if (gate == 5) {result = !(input1 ^ input2);}
+		    else {result = -1;}
+		    *(nodeStatus+nbr*4+3) = result;
 
-            int bidx = atomicAdd(blockCounter, 1);
-            if (bidx >= sharedQueueSize)
-            {
-                //copy to queue;
-                if (threadIdx.x==0)
-                {
-                    int boffset = atomicAdd(outputBlockOffset, 1);
-                    memcpy(outputQueue+boffset*sharedQueueSize, blockQueue, sharedQueueSize*sizeof(int));
-                    *blockCounter = 0;
-                }
-                __syncthreads();
-            }
-            //save to block mem
-            bidx = atomicAdd(blockCounter, 1);
-            *(blockQueue+bidx) = nbr;
-            
+		    int bidx = atomicAdd(blockCounter, 1);
+		    if (bidx >= sharedQueueSize)
+		    {
+			//copy to queue;
+			if (threadIdx.x==0)
+			{
+			    int boffset = atomicAdd(outputBlockOffset, 1);
+			    memcpy(outputQueue+boffset*sharedQueueSize, blockQueue, sharedQueueSize*sizeof(int));
+			    *blockCounter = 0;
+			}
+			__syncthreads();
+		    }
+		    //save to block mem
+		    bidx = atomicAdd(blockCounter, 1);
+		    *(blockQueue+bidx) = nbr;
+	    }
         }
         // increment idx by 1
         idx = atomicAdd(idxCurrLevelNodes, 1);
