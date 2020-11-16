@@ -1,4 +1,3 @@
-  
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
 #include <stdio.h>
@@ -10,6 +9,27 @@
 #define INPUT4_LEN 10000
 #define N_BLOCK 32
 #define N_THREAD 10
+
+int gate_kernel(int gate, int input1, int input2)
+{
+    //AND
+    if (gate == 0) {return input1 & input2;}
+    //OR
+    else if (gate == 1) {return (input1 | input2);}
+    //NAND
+    else if (gate == 2) {return !(input1 & input2);}
+    //NOR
+    else if (gate == 3) {return !(input1 | input2);}
+    //XOR
+    else if (gate == 4) {return input1 ^ input2;}
+    //XNOR
+    else if (gate == 5) {return !(input1 ^ input2);}
+    else {
+        printf("The input logic gate is invalid");
+        return -1;
+    }
+
+}
 
 __global__ void kernel(int* nodePtrs, int* nodeNeightbors, int* nodeStatus, int* currLevelNodes, int* idxCurrLevelNodes, int* outputQueue, int* idxOutputQueue)
 {
@@ -41,27 +61,6 @@ __global__ void kernel(int* nodePtrs, int* nodeNeightbors, int* nodeStatus, int*
         // increment idx by 1
         idx = atomicAdd(idxCurrLevelNodes, 1);
     }
-}
-
-int gate_kernel(int gate, int input1, int input2)
-{
-    //AND
-    if (gate == 0) {return input1 & input2;}
-    //OR
-    else if (gate == 1) {return (input1 | input2);}
-    //NAND
-    else if (gate == 2) {return !(input1 & input2);}
-    //NOR
-    else if (gate == 3) {return !(input1 | input2);}
-    //XOR
-    else if (gate == 4) {return input1 ^ input2;}
-    //XNOR
-    else if (gate == 5) {return !(input1 ^ input2);}
-    else {
-        printf("The input logic gate is invalid");
-        return -1;
-    }
-
 }
 
 int readFile124(char* name, int* data)
