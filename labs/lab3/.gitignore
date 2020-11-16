@@ -3,3 +3,5 @@
 global_queuing
 output
 block_queuing
+*.c
+!main.c
