@@ -17,42 +17,36 @@ __global__ void kernel(int* nodePtrs, int* nodeNeightbors, int* nodeStatus, int*
     {
         // get node
         int node = *(currLevelNodes+idx);
-        // check if node is visited. skip if so
-        if (*(nodeStatus+node*4)==0)
-        {
-            // find out neighbours
-            int nbr_idx = *(nodePtrs+node);
-            int nbr_end = *(nodePtrs+node+1);
-            for(; nbr_idx<=nbr_end; nbr_idx++)
-            {   
+        int nbr_idx = *(nodePtrs+node);
+        int nbr_end = *(nodePtrs+node+1);
+        for(; nbr_idx<=nbr_end; nbr_idx++)
+	{   
                 int nbr = *(nodeNeightbors+nbr_idx);
                 // check if visited
                 if(*(nodeStatus+nbr*4)==0)
                 {
-                    *(nodeStatus+nbr*4) = 1;
-                    int gate = *(nodeStatus+nbr*4+1);
-                    int input1 = *(nodeStatus+nbr*4+2);
-                    int input2 = *(nodeStatus+node*4+3);
-                    int result = -1;
-                    //AND
-                    if (gate == 0) {result = (input1 & input2);}
-                    //OR
-                    else if (gate == 1) {result = (input1 | input2);}
-                    //NAND
-                    else if (gate == 2) {result = !(input1 & input2);}
-                    //NOR
-                    else if (gate == 3) {result = !(input1 | input2);}
-                    //XOR
-                    else if (gate == 4) {result = (input1 ^ input2);}
-                    //XNOR
-                    else if (gate == 5) {result = !(input1 ^ input2);}
-                    else {result = -1;}
-                    *(nodeStatus+nbr*4+3) = result;
-                    int oidx = atomicAdd(idxOutputQueue, 1);
-                    *(outputQueue+oidx) = nbr;
-                }
-                // skip if visited
-            }
+		    	atomicAdd(nodeStatus+nbr*4, 1);
+                    	int gate = *(nodeStatus+nbr*4+1);
+                    	int input1 = *(nodeStatus+nbr*4+2);
+                    	int input2 = *(nodeStatus+node*4+3);
+                    	int result = -3;
+                    	//AND
+                    	if (gate == 0) {result = (input1 & input2);}
+                    	//OR
+                    	else if (gate == 1) {result = (input1 | input2);}
+                    	//NAND
+                    	else if (gate == 2) {result = !(input1 & input2);}
+                    	//NOR
+                    	else if (gate == 3) {result = !(input1 | input2);}
+                    	//XOR
+                    	else if (gate == 4) {result = (input1 ^ input2);}
+                    	//XNOR
+                    	else if (gate == 5) {result = !(input1 ^ input2);}
+                    	else {result = -1;}
+                    	*(nodeStatus+nbr*4+3) = result;
+                    	int oidx = atomicAdd(idxOutputQueue, 1);
+                    	*(outputQueue+oidx) = nbr;
+        	}
         }
         // increment idx by 1
         idx = atomicAdd(idxCurrLevelNodes, 1);
@@ -154,7 +148,7 @@ int main(int argc, char* argv[])
 
         // run
         kernel <<<N_BLOCK, N_THREAD>>> (c_data1, c_data2, c_data3, c_data4, c_idxCurrLevelNodes, c_outputQueue, c_idxOutputQueue);
-        cudaDeviceSynchronize();
+	cudaDeviceSynchronize();
 
         // data3 retrival
         cudaMemcpy(data3, c_data3, INPUT3_LEN*4*sizeof(int), cudaMemcpyDeviceToHost);
