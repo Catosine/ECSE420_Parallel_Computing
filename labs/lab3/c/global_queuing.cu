@@ -11,7 +11,7 @@
 #define N_BLOCK 32
 #define N_THREAD 10
 
-__global__ kernel(int* nodePtrs, int* nodeNeightbors, int* nodeStatus, int* currLevelNodes, int* idxCurrLevelNodes, int* outputQueue, int* idxOutputQueue)
+__global__ void kernel(int* nodePtrs, int* nodeNeightbors, int* nodeStatus, int* currLevelNodes, int* idxCurrLevelNodes, int* outputQueue, int* idxOutputQueue)
 {
     int idx = atomicAdd(idxCurrLevelNodes, 1);
     while(idx < INPUT4_LEN)
@@ -24,7 +24,7 @@ __global__ kernel(int* nodePtrs, int* nodeNeightbors, int* nodeStatus, int* curr
             // find out neighbours
             int nbr_idx = *(nodePtrs+node);
             int nbr_end = *(nodePtrs+node+1);
-            for(, nbr_idx<=nbr_end; nbr_idx++)
+            for(; nbr_idx<=nbr_end; nbr_idx++)
             {   
                 int nbr = *(nodeNeightbors+nbr_idx);
                 // check if visited
@@ -59,7 +59,7 @@ int gate_kernel(int gate, int input1, int input2)
     else if (gate == 5) {return !(input1 ^ input2);}
     else {
         printf("The input logic gate is invalid");
-        -1;
+        return -1;
     }
 
 }
@@ -82,6 +82,7 @@ int readFile124(char* name, int* data)
     free(line);
     line = NULL;
     fclose(f);
+    return 0;
 }
 
 int readFile3(char* name, int* data)
@@ -116,6 +117,7 @@ int readFile3(char* name, int* data)
     free(line);
     line = NULL;
     fclose(f);
+    return 0;
 }
 
 int main(int argc, char* argv[])
