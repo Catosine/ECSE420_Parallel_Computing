@@ -10,27 +10,6 @@
 #define N_BLOCK 32
 #define N_THREAD 10
 
-int gate_kernel(int gate, int input1, int input2)
-{
-    //AND
-    if (gate == 0) {return input1 & input2;}
-    //OR
-    else if (gate == 1) {return (input1 | input2);}
-    //NAND
-    else if (gate == 2) {return !(input1 & input2);}
-    //NOR
-    else if (gate == 3) {return !(input1 | input2);}
-    //XOR
-    else if (gate == 4) {return input1 ^ input2;}
-    //XNOR
-    else if (gate == 5) {return !(input1 ^ input2);}
-    else {
-        printf("The input logic gate is invalid");
-        return -1;
-    }
-
-}
-
 __global__ void kernel(int* nodePtrs, int* nodeNeightbors, int* nodeStatus, int* currLevelNodes, int* idxCurrLevelNodes, int* outputQueue, int* idxOutputQueue)
 {
     int idx = atomicAdd(idxCurrLevelNodes, 1);
@@ -51,7 +30,24 @@ __global__ void kernel(int* nodePtrs, int* nodeNeightbors, int* nodeStatus, int*
                 if(*(nodeStatus+nbr*4)==0)
                 {
                     *(nodeStatus+nbr*4) = 1;
-                    *(nodeStatus+nbr*4+3) = gate_kernel(*(nodeStatus+nbr*4+1), *(nodeStatus+nbr*4+2), *(nodeStatus+node*4+3));
+                    int gate = *(nodeStatus+nbr*4+1);
+                    int input1 = *(nodeStatus+nbr*4+2);
+                    int input2 = *(nodeStatus+node*4+3);
+                    int result = -1;
+                    //AND
+                    if (gate == 0) {result = (input1 & input2);}
+                    //OR
+                    else if (gate == 1) {result = (input1 | input2);}
+                    //NAND
+                    else if (gate == 2) {result = !(input1 & input2);}
+                    //NOR
+                    else if (gate == 3) {result = !(input1 | input2);}
+                    //XOR
+                    else if (gate == 4) {result = (input1 ^ input2);}
+                    //XNOR
+                    else if (gate == 5) {result = !(input1 ^ input2);}
+                    else {result = -1;}
+                    *(nodeStatus+nbr*4+3) = result;
                     int oidx = atomicAdd(idxOutputQueue, 1);
                     *(outputQueue+oidx) = nbr;
                 }
